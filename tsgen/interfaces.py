@@ -5,7 +5,7 @@ from types import GenericAlias
 from typing import Optional
 
 import jinja2
-from tsgen.formatting import to_snake, to_camel
+from tsgen.formatting import to_pascal, to_camel
 
 TS_INTERFACE_TEMPLATE = """
 interface {{name}} {
@@ -111,7 +111,7 @@ class TSTypeContext:
         return f"{subtype}[]"
 
     def _add_interface(self, dc):
-        typename = to_snake(dc.__name__)
+        typename = to_pascal(dc.__name__)
 
         assert dc not in self.dataclass_types and typename not in self.dataclass_types.values()
         self.dataclass_types[dc] = typename

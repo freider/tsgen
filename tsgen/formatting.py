@@ -1,7 +1,7 @@
 import re
 
 
-def to_snake(s: str):
+def to_pascal(s: str):
     def replacer(g: re.Match) -> str:
         gs = g.group(0).lstrip("_")
         return gs[0].upper() + gs[1:]
@@ -10,5 +10,5 @@ def to_snake(s: str):
 
 
 def to_camel(s: str):
-    s = to_snake(s)
+    s = to_pascal(s)
     return s[0].lower() + s[1:]

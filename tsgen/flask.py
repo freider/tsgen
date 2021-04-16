@@ -4,7 +4,7 @@ from functools import wraps
 from types import FunctionType
 
 import flask
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint
 from tsgen.apis import build_ts_func, TSGenFunctionInfo
 from tsgen.interfaces import TSTypeContext
 from tsgen.formatting import to_camel
