@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "tsgen"
+version = "0.1.0"
+description = "Generate typescript based on Python type annotations"
+authors = ["Elias Freider <elias@freider.se>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Jinja2 = "^2.11.3"
+Flask = "^1.1.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
