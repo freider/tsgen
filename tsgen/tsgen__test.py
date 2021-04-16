@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from lib.tsgen import to_snake, TSTypeContext
+from tsgen.interfaces import TSTypeContext
+from tsgen.formatting import to_snake
 
 
 def test_to_snake():
