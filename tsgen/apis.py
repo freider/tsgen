@@ -1,6 +1,8 @@
+import dataclasses
+from typing import Optional
+
 import jinja2
 from tsgen.formatting import to_camel
-from tsgen.interfaces import TSGenFunctionInfo
 
 TS_FUNC_TEMPLATE = """
 export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
@@ -19,6 +21,15 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
 """
 
 
+@dataclasses.dataclass
+class TSGenFunctionInfo:
+    import_name: str
+    ts_function_name: str
+    return_value_py_type: type
+
+    payload: Optional[tuple[str, type]]
+
+
 def build_ts_func(info: TSGenFunctionInfo, formatted_url, url_args, method, ts_context):
     ts_args = []
     for arg in url_args:
@@ -26,11 +37,11 @@ def build_ts_func(info: TSGenFunctionInfo, formatted_url, url_args, method, ts_c
         formatted_url = formatted_url.replace(f"<{arg}>", f"${{{ts_arg_name}}}")
         ts_args.append((ts_arg_name, "string"))  # TODO: add support for typed flask arguments i.e. <foo:int>
 
-    ts_return_type = ts_context.py_to_js_type(info.return_value_py_type)
+    ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
 
     if info.payload:
         payload_name, payload_py_type = info.payload
-        ts_payload_type = ts_context.py_to_js_type(payload_py_type)
+        ts_payload_type = ts_context.py_to_ts_type(payload_py_type)
         payload_arg_name = to_camel(payload_name)
         ts_args.append((payload_arg_name, ts_payload_type))
     else:

@@ -5,20 +5,7 @@ from types import GenericAlias
 from typing import Optional
 
 import jinja2
-from flask import Blueprint
-from tsgen.flask import build_ts_api
 from tsgen.formatting import to_snake, to_camel
-
-
-@dataclasses.dataclass
-class TSGenFunctionInfo:
-    import_name: str
-    ts_function_name: str
-    return_value_py_type: type
-
-    payload: Optional[tuple[str, type]]
-
-
 
 TS_INTERFACE_TEMPLATE = """
 interface {{name}} {
@@ -52,6 +39,7 @@ class TSTypeContext:
         self.dependencies: dict[str, set[str]] = defaultdict(set)
 
     def top_level_interfaces(self) -> set[str]:
+        """Get all types that no other types depend on"""
         without_dependents = set(self.interfaces.keys())
         for parent, deps in self.dependencies.items():
             if parent is not None:
@@ -59,6 +47,10 @@ class TSTypeContext:
         return without_dependents
 
     def natural_order(self) -> list[str]:
+        """Get types in a natural order of definition
+
+        Topologically sorted with leaves first and top level (root) interfaces last
+        """
         ret = []
         for top in self.top_level_interfaces():
             deps = self.topological_dependencies(top)
@@ -69,7 +61,7 @@ class TSTypeContext:
 
     def topological_dependencies(self, ts_typename: str) -> list[str]:
         """
-        Get all interfaces that a typescript type depends on, in topological order
+        Get all interface dependency types in topological order
 
         :param ts_typename: The name of the typescript type
         :return: List of typescript interfaces names, in leaf -> root order
@@ -100,7 +92,7 @@ class TSTypeContext:
 
         return result
 
-    def py_to_js_type(self, t: type, parent_ts_type: Optional[str] = None):
+    def py_to_ts_type(self, t: type, parent_ts_type: Optional[str] = None):
         if is_dataclass(t):
             if t not in self.dataclass_types:
                 self._add_interface(t)
@@ -115,7 +107,7 @@ class TSTypeContext:
     def _list_type(self, t: GenericAlias, parent_ts_type: Optional[str] = None):
         assert len(t.__args__) == 1
         argtype = t.__args__[0]
-        subtype = self.py_to_js_type(argtype, parent_ts_type)
+        subtype = self.py_to_ts_type(argtype, parent_ts_type)
         return f"{subtype}[]"
 
     def _add_interface(self, dc):
@@ -127,7 +119,7 @@ class TSTypeContext:
         fields = []
 
         for field in dc_fields:
-            field_ts_type = self.py_to_js_type(field.type, typename)
+            field_ts_type = self.py_to_ts_type(field.type, typename)
             field_ts_name = to_camel(field.name)
             fields.append((field_ts_name, field_ts_type))
 
@@ -136,4 +128,3 @@ class TSTypeContext:
             name=typename,
             fields=fields
         )
-

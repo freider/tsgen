@@ -1,20 +1,13 @@
 from dataclasses import dataclass
 
 from tsgen.interfaces import TSTypeContext
-from tsgen.formatting import to_snake
-
-
-def test_to_snake():
-    assert to_snake("foo") == "Foo"
-    assert to_snake("foo_bar") == "FooBar"
-    assert to_snake("_nisse") == "Nisse"
 
 
 def test_list():
     t = TSTypeContext()
-    assert t.py_to_js_type(list[int]) == "number[]"
-    assert t.py_to_js_type(list[str]) == "string[]"
-    assert t.py_to_js_type(list[list[str]]) == "string[][]"
+    assert t.py_to_ts_type(list[int]) == "number[]"
+    assert t.py_to_ts_type(list[str]) == "string[]"
+    assert t.py_to_ts_type(list[list[str]]) == "string[][]"
 
 
 def test_dataclass():
@@ -25,7 +18,7 @@ def test_dataclass():
         my_field: int
         other_field: str
 
-    assert t.py_to_js_type(Foo) == "Foo"
+    assert t.py_to_ts_type(Foo) == "Foo"
     assert t.top_level_interfaces() == {"Foo"}
     assert t.interfaces["Foo"] == """
 interface Foo {
@@ -49,7 +42,7 @@ def test_deep_nested_dataclass():
     class Foo:
         my_field: Bar
 
-    assert t.py_to_js_type(Foo) == "Foo"
+    assert t.py_to_ts_type(Foo) == "Foo"
     assert t.interfaces["Foo"] == """
 interface Foo {
   myField: Bar;
@@ -78,5 +71,5 @@ def test_list_of_dataclass():
     class Foo:
         bars: list[Bar]
 
-    assert t.py_to_js_type(Foo) == "Foo"
+    assert t.py_to_ts_type(Foo) == "Foo"
     assert t.topological_dependencies("Foo") == ["Bar", "Foo"]
