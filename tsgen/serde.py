@@ -23,7 +23,7 @@ def parse_json(pytype: type, data):
         list_arg = pytype.__args__[0]
         return [parse_json(list_arg, it) for it in data]
     else:
-        raise RuntimeError("unsupported type")
+        raise RuntimeError(f"unsupported type {type!r}")
 
 
 def prepare_json(obj):
@@ -37,4 +37,4 @@ def prepare_json(obj):
     elif isinstance(obj, list):
         return [prepare_json(it) for it in obj]
     else:
-        raise RuntimeError("unsupported type")
+        raise RuntimeError(f"unsupported type {type(obj)!r}")

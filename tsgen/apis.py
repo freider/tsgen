@@ -9,7 +9,7 @@ TS_FUNC_TEMPLATE = """
 export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
   const resp = await fetch(`{{url_pattern}}`, {
     method: '{{method}}'
-    {%- if payload_name != None %}
+    {%- if payload_name != None %},
     headers: {
       'Content-Type': 'application/json'
     },
@@ -38,7 +38,10 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
         url_pattern = url_pattern.replace(f"<{arg}>", f"${{{ts_arg_name}}}")
         ts_args.append((ts_arg_name, "string"))
 
-    ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
+    if info.return_value_py_type is None:
+        ts_return_type = "void"  # TODO: test this on frontend
+    else:
+        ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
 
     if info.payload:
         payload_name, payload_py_type = info.payload
@@ -61,7 +64,7 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
 
 def get_endpoint_info(func):
     annotations = func.__annotations__.copy()
-    return_value_py_type = annotations.pop("return")
+    return_value_py_type = annotations.pop("return", None)
     payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
     assert len(payloads) <= 1
     return TSGenFunctionInfo(

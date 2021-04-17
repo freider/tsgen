@@ -31,6 +31,8 @@ def typed():
 
             resp = func(**new_kwargs)
             # always jsonify, so that endpoint can return a single dataclass
+            if info.return_value_py_type is None:
+                return resp  # unannotated return value returns raw response
             return jsonify(prepare_json(resp))
 
         return new_f
@@ -75,9 +77,10 @@ def build_ts_api():
         print()
 
 
-cli_commands = Blueprint("tsgen", __name__)
+cli_blueprint = Blueprint("tsgen", __name__)
 
-@cli_commands.cli.command("build")
+
+@cli_blueprint.cli.command("build")
 def build():
     build_ts_api()
 
