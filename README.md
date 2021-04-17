@@ -132,6 +132,6 @@ tsgen translates python *snake_case* field names and function names into *camelC
 
 
 ## TODO
--[ ] More generic api support for other frameworks than Flask
--[ ] Support for typed/casted url arguments in api routes
--[ ] Automated data validation on the python side for injected payloads (maybe using pydantic?)
+* More generic api support for other frameworks than Flask
+* Support for typed/casted url arguments in api routes
+* Automated data validation on the python side for injected payloads (maybe using pydantic?)
