@@ -27,19 +27,7 @@ The blueprint registers no routes, but adds the `tsgen` group of command line to
 * Generation of typescript client side accessor functions using `fetch` to get/post typed data to/from flask routes.
 * Payload data injection for flask views, to access http body payload data as typed data instead of untyped json-like structures
 
-### Currently supported type translations
-
-| Python type   | Typescript type | Note   |
-| ------------- | --------------- | ------ |
-| dataclass     | interface       |        |
-| int           | number          |        |
-| float         | number          |        |
-| bool          | boolean         |        |
-| list          | Array           |*type*[]|
-
-It should be relatively straight forward to add support for additional data types as needs arises (e.g. dicts and date/datetime objects)
-
-### Flask integration example
+### Example
 
 The flask integration relies on typing hints in the flask endpoint declarations to generate typescript source code for accessing the endpoints.
 
@@ -126,6 +114,17 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 
 Data injection currently only supports a single dataclass injection representing a single top level json object in the request body.
 
+### Currently supported type translations
+
+| Python type   | Typescript type | Note   |
+| ------------- | --------------- | ------ |
+| dataclass     | interface       |        |
+| int           | number          |        |
+| float         | number          |        |
+| bool          | boolean         |        |
+| list          | Array           |*type*[]|
+
+It should be relatively straight forward to add support for additional data types as needs arises (e.g. dicts and date/datetime objects)
 
 ### Name formatting
 tsgen translates python *snake_case* field names and function names into *camelCase* variables and functions in typescript to conform with standard linting rules in each context. This renaming rule is currently non-optional.
