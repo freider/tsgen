@@ -59,13 +59,13 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
     return ts_function_code
 
 
-def get_endpoint_info(func, import_name):
+def get_endpoint_info(func):
     annotations = func.__annotations__.copy()
     return_value_py_type = annotations.pop("return")
     payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
     assert len(payloads) <= 1
     return TSGenFunctionInfo(
-        import_name=import_name,
+        import_name=func.__module__,
         ts_function_name=to_camel(func.__name__),
         return_value_py_type=return_value_py_type,
         payload=list(payloads.items())[0] if payloads else None

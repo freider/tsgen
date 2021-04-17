@@ -15,11 +15,21 @@ interface {{name}} {
 }
 """
 
+def is_list_type(t: type):
+    return isinstance(t, GenericAlias) and t.__origin__ == list
+
 
 class CircularDependency(Exception):
     def __init__(self, name):
         self.name = name
 
+
+PRIMITIVE_TYPES: dict[type, str] = {
+    str: "string",
+    int: "number",
+    float: "number",
+    bool: "boolean",
+}
 
 class TSTypeContext:
     """
@@ -28,12 +38,6 @@ class TSTypeContext:
     Keeps track of inter-dependencies between those interfaces
     """
     def __init__(self):
-        self.base_types: dict[type, str] = {
-            str: "string",
-            int: "number",
-            float: "number",
-            bool: "boolean",
-        }
         self.dataclass_types: dict[type, str] = {}
         self.interfaces: dict[str, str] = {}
         self.dependencies: dict[str, set[str]] = defaultdict(set)
@@ -99,10 +103,10 @@ class TSTypeContext:
             ts_name = self.dataclass_types[t]
             self.dependencies[parent_ts_type].add(ts_name)
             return ts_name
-        if isinstance(t, GenericAlias) and t.__origin__ == list:
+        if is_list_type(t):
             #  e.g. list[int]
             return self._list_type(t, parent_ts_type)
-        return self.base_types[t]
+        return PRIMITIVE_TYPES[t]
 
     def _list_type(self, t: GenericAlias, parent_ts_type: Optional[str] = None):
         assert len(t.__args__) == 1

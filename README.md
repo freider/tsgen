@@ -21,7 +21,7 @@ To prepare an endpoint for source generation, make sure it has a python return t
 
 ```python
 @app.route("/api/foo/<my_id>")
-@typed(__name__)
+@typed()
 def get_foo(my_id) -> Foo:
     return Foo(...)
 ```

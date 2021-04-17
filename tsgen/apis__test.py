@@ -14,7 +14,7 @@ def test_api_gen():
         return Foo()
 
     ts_context = TSTypeContext()
-    info = get_endpoint_info(get_foo, None)
+    info = get_endpoint_info(get_foo)
     func_code = apis.build_ts_func(info, "/api/foo/<my_id>", ["my_id"], "GET", ts_context)
     assert func_code == """
 export const getFoo = async (myId: string): Promise<Foo> => {

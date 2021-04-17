@@ -6,9 +6,10 @@ import flask
 from flask import request, jsonify, Blueprint
 from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
 from tsgen.interfaces import TSTypeContext
+from tsgen.serde import parse_json, prepare_json
 
 
-def typed(import_name):
+def typed():
     """Decorator to mark flask view function for typescript client support
 
     * Mark a view for typescript client code generation
@@ -18,7 +19,7 @@ def typed(import_name):
     :param import_name: Determines which file the generated typescript will go into
     """
     def generator(func: FunctionType):
-        func._ts_gen = info = get_endpoint_info(func, import_name)
+        func._ts_gen = info = get_endpoint_info(func)
 
         @wraps(func)
         def new_f(**kwargs):
@@ -26,12 +27,11 @@ def typed(import_name):
             new_kwargs = kwargs.copy()
             if info.payload:
                 payload_name, payload_type = info.payload
-                # TODO: unpack nested json to dataclasses
-                new_kwargs[payload_name] = payload_type(**request.json)
+                new_kwargs[payload_name] = parse_json(payload_type, request.json)
 
             resp = func(**new_kwargs)
             # always jsonify, so that endpoint can return a single dataclass
-            return jsonify(resp)
+            return jsonify(prepare_json(resp))
 
         return new_f
 
