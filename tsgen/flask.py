@@ -1,29 +1,24 @@
 from collections import defaultdict
-from dataclasses import is_dataclass
 from functools import wraps
 from types import FunctionType
 
 import flask
 from flask import request, jsonify, Blueprint
-from tsgen.apis import build_ts_func, TSGenFunctionInfo
+from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
 from tsgen.interfaces import TSTypeContext
-from tsgen.formatting import to_camel
 
 
 def typed(import_name):
-    def generator(func: FunctionType):
-        annotations = func.__annotations__.copy()
-        return_value_py_type = annotations.pop("return")
-        payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
-        assert len(payloads) <= 1
+    """Decorator to mark flask view function for typescript client support
 
-        info = TSGenFunctionInfo(
-            import_name=import_name,
-            ts_function_name=to_camel(func.__name__),
-            return_value_py_type=return_value_py_type,
-            payload=list(payloads.items())[0] if payloads else None
-        )
-        func._ts_gen = info
+    * Mark a view for typescript client code generation
+    * Inject any dataclass argument by parsing the request payload
+    * Allow the endpoint to return a dataclass as the top level return value
+
+    :param import_name: Determines which file the generated typescript will go into
+    """
+    def generator(func: FunctionType):
+        func._ts_gen = info = get_endpoint_info(func, import_name)
 
         @wraps(func)
         def new_f(**kwargs):
@@ -39,6 +34,7 @@ def typed(import_name):
             return jsonify(resp)
 
         return new_f
+
     return generator
 
 
@@ -60,10 +56,10 @@ def build_ts_api():
             elif "PUT" in rule.methods:
                 method = "PUT"
 
-            formatted_url = rule.rule
+            url_pattern = rule.rule
             url_args = rule.arguments
 
-            ts_function_code = build_ts_func(info, formatted_url, url_args, method, ts_context)
+            ts_function_code = build_ts_func(info, url_pattern, url_args, method, ts_context)
             generated_ts[import_name].append(ts_function_code)
 
     for import_name, ts_snippets in generated_ts.items():

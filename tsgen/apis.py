@@ -1,4 +1,5 @@
 import dataclasses
+from dataclasses import is_dataclass
 from typing import Optional
 
 import jinja2
@@ -30,12 +31,12 @@ class TSGenFunctionInfo:
     payload: Optional[tuple[str, type]]
 
 
-def build_ts_func(info: TSGenFunctionInfo, formatted_url, url_args, method, ts_context):
+def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_context):
     ts_args = []
     for arg in url_args:
         ts_arg_name = to_camel(arg)
-        formatted_url = formatted_url.replace(f"<{arg}>", f"${{{ts_arg_name}}}")
-        ts_args.append((ts_arg_name, "string"))  # TODO: add support for typed flask arguments i.e. <foo:int>
+        url_pattern = url_pattern.replace(f"<{arg}>", f"${{{ts_arg_name}}}")
+        ts_args.append((ts_arg_name, "string"))
 
     ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
 
@@ -53,6 +54,19 @@ def build_ts_func(info: TSGenFunctionInfo, formatted_url, url_args, method, ts_c
         "payload_name": payload_arg_name,
         "args": ts_args,
         "method": method,
-        "url_pattern": formatted_url
+        "url_pattern": url_pattern
     })
     return ts_function_code
+
+
+def get_endpoint_info(func, import_name):
+    annotations = func.__annotations__.copy()
+    return_value_py_type = annotations.pop("return")
+    payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
+    assert len(payloads) <= 1
+    return TSGenFunctionInfo(
+        import_name=import_name,
+        ts_function_name=to_camel(func.__name__),
+        return_value_py_type=return_value_py_type,
+        payload=list(payloads.items())[0] if payloads else None
+    )
