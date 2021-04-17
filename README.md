@@ -8,7 +8,9 @@ Mainly for myself ;) I built it because it was fun to build from scratch and lea
 It can be useful for anyone who is setting up a new web project with a typescript frontend and a Python/Flask backend and want to build/prototype something quickly without having to write client code boilerplate or set up more complicated client code generation systems.
 
 ## Installation instructions
-Due to the feature incompleteness and hacky nature of the project it's currently not added to pypi. You can still install it by cloning the repo and installing using `poetry install` or using a git reference in your own project dependencies.
+Due to the feature incompleteness, hacky nature of the project and lack of current commitment to updating the project, it's currently not added to pypi.
+
+You can install the package using a git reference, e.g.: `pip install git+git://github.com/freider/tsgen.git`.
 
 To enable the code generation cli tool, add the `tsgen.flask.cli_blueprint` to your flask app:
 ```python
