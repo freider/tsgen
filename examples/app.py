@@ -38,5 +38,10 @@ def only_inject_endpoint(the_foo: Foo):
     return Response(status=201)
 
 
+@app.route("/")
+def index():
+    return app.send_static_file('index.html')
+
+
 if __name__ == '__main__':
     app.run()

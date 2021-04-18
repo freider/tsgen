@@ -19,6 +19,7 @@ RUN npx parcel build main.html  #build index.html bundle
 
 FROM backend AS server
 ENV FLASK_HOST=0.0.0.0
+ENV FLASK_ENV=development
 
 COPY --from=js /src/index.html /flask-root/static/
 EXPOSE 5000
