@@ -1,0 +1,22 @@
+<body>
+<script type="module">
+  import {createBar, getFoo, onlyInjectEndpoint} from "./api";
+
+  const body = document.getElementsByTagName("body")[0];
+
+  getFoo("world").then((foo) => {
+    const resultText = document.createTextNode(foo.oneField);
+    body.appendChild(resultText);
+  });
+
+  createBar({subField: {oneField: "post"}, otherField: "other"}).then((foo) => {
+    const resultText = document.createTextNode(foo.oneField);
+    body.appendChild(resultText);
+  });
+
+  onlyInjectEndpoint({oneField: "inject"}).then(() => {
+    const successText = document.createTextNode("inject");
+    body.appendChild(successText);
+  });
+</script>
+</body>

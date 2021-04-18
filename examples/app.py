@@ -13,7 +13,7 @@ class Foo:
     one_field: str
 
 
-@app.route("/foo/<id>")
+@app.route("/api/foo/<id>")
 @typed()
 def get_foo(id) -> Foo:
     return Foo(one_field=f"hello {id}")
@@ -25,7 +25,7 @@ class Bar:
     other_field: str
 
 
-@app.route("/bar/", methods=["POST"])
+@app.route("/api/bar/", methods=["POST"])
 @typed()
 def create_bar(bar: Bar) -> Foo:
     return bar.sub_field
@@ -34,7 +34,7 @@ def create_bar(bar: Bar) -> Foo:
 @app.route("/api/raw_response", methods=["POST"])
 @typed()
 def only_inject_endpoint(the_foo: Foo):
-    assert the_foo.one_field == request.json["one_field"]
+    assert the_foo.one_field == request.json["oneField"]
     return Response(status=201)
 
 

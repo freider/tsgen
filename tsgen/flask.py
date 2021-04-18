@@ -66,7 +66,8 @@ def build_ts_api():
 
     for import_name, ts_snippets in generated_ts.items():
         ts_context = ts_contexts[import_name]
-        print(f">>> File: {import_name}.ts\n")
+        # TODO: actually output to files
+        print(f"// File: {import_name}.ts\n")
 
         interfaces = [
             ts_context.interfaces[ts_interface_name]

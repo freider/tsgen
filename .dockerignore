@@ -1,0 +1,5 @@
+examples/frontend/node_modules
+package-lock.json
+api.ts
+.venv
+.pytest_cache

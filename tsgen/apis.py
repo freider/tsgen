@@ -16,8 +16,10 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
     body: JSON.stringify({{payload_name}}),
     {%- endif %}
   });
+  {%- if response_type_name != "void" %}
   const data: {{response_type_name}} = await resp.json();
   return data;
+  {%- endif %}
 }
 """
 
