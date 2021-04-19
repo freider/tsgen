@@ -43,7 +43,7 @@ def only_inject_endpoint(the_foo: Foo):
 @app.route("/api/failing")
 @typed()
 def failing():
-    return Response(status=500)
+    return Response(status=400)
 
 
 # enable hot reloads in development mode

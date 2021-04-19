@@ -23,7 +23,7 @@
       try {
         await failing();
       } catch (e) {
-        return true;
+        return e.response.status === 400;
       }
       return false;
     }],
