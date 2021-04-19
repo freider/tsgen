@@ -40,7 +40,7 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
         ts_args.append((ts_arg_name, "string"))
 
     if info.return_value_py_type is None:
-        ts_return_type = "void"  # TODO: test this on frontend
+        ts_return_type = "void"
     else:
         ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
 

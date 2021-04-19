@@ -1,6 +1,3 @@
-import logging
-
-import sys
 from collections import defaultdict
 from functools import wraps
 from pathlib import Path
@@ -9,7 +6,9 @@ from types import FunctionType
 import click
 import flask
 import jinja2
+import sys
 from flask import request, jsonify, Blueprint
+
 from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
 from tsgen.interfaces import TSTypeContext
 from tsgen.serde import parse_json, prepare_json

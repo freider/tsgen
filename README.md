@@ -57,8 +57,8 @@ __IMPORTANT__: The `typed` decorator must currently be applied before to the fla
 
 To generate the typescript source files, run the following command in the context of your flask app:
 
-```bash
-flask tsgen build
+```shell
+flask tsgen build /some/output/dir
 ```
 
 Using the above route example, the following typescript interface and function is generated:
@@ -128,6 +128,35 @@ It should be relatively straight forward to add support for additional data type
 
 ### Name formatting
 tsgen translates python *snake_case* field names and function names into *camelCase* variables and functions in typescript to conform with standard linting rules in each context. This renaming rule is currently non-optional.
+
+### "Hot reloading"
+Add a `dev_reload_hook` call at the bottom of your flask app file to have the client code be automatically generated whenever you change your code in flask `development` mode (i.e. every time that flask reloads the app)
+```python
+from flask import Flask
+from tsgen.flask import dev_reload_hook
+app = Flask(__name__)
+
+# ... add routes
+dev_reload_hook(app, "/your/output/path")
+```
+
+Together with HMR support on the bundler side (using parcel or webpack or similar) this can be extremely powerful as you can basically change stuff in your backend api and have the changes reflect in your browser without a hard page refresh.
+
+
+
+## Dev/Testing instructions
+The examples dir serves as a manual integration test as well. To build and run it using docker, run the following command:
+```shell
+docker build -t freider/tsgen -f examples/Dockerfile .git
+docker run -p 5000:5000 -t freider/tsgen
+```
+You can then inspect the test results by navigating to http://localhost:5000 with the server running.
+
+The architecture of the simple example is similar to what you might have in production as well:
+* A rest-like api defined in flask
+* A frontend in html + typescript, including the tsgen-generated api client code
+* Node + Parcel to build a deliverable html bundle.
+
 
 
 ## TODO
