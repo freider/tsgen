@@ -160,6 +160,11 @@ The architecture of the simple example is similar to what you might have in prod
 
 
 ## TODO
-* More generic api support for other frameworks than Flask
+### Major
+* More generic api support for other frameworks than Flask (starlette, fastapi?)
+* Support (partial?) for postponed annotation evaluation ([PEP 563](https://www.python.org/dev/peps/pep-0563/))
+
+### Minor
 * Support for typed/casted url arguments in api routes
-* Automated data validation on the python side for injected payloads (maybe using pydantic?)
+* date/datetime data types
+* dict/object data types
