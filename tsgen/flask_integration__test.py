@@ -1,9 +1,10 @@
+from __future__ import annotations
 import json
 from dataclasses import dataclass
 
 from flask import Flask, Response
 
-from tsgen.flask import typed
+from tsgen.flask_integration import typed
 
 test_app = Flask(__name__)
 
@@ -35,7 +36,7 @@ def test_request_response():
                     "oneField": "world",
                 },
             }),
-            content_type='application/json'
+            content_type="application/json"
         )
         assert resp.status_code == 200
         assert {"oneField": "world"} == resp.json
@@ -58,7 +59,7 @@ def test_raw_response():
                     "oneField": "world",
                 },
             }),
-            content_type='application/json'
+            content_type="application/json"
         )
         assert resp.status_code == 201
         assert resp.data == b''

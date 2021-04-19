@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import datetime
 from dataclasses import dataclass
 
 from tsgen.interfaces import TSTypeContext

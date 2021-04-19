@@ -3,6 +3,7 @@ from dataclasses import is_dataclass
 
 from tsgen.formatting import to_camel
 from tsgen.interfaces import PRIMITIVE_TYPES, is_list_type
+from tsgen.typehints import get_dataclass_type_hints
 
 
 def parse_json(pytype: type, data):
@@ -15,9 +16,10 @@ def parse_json(pytype: type, data):
     if pytype in PRIMITIVE_TYPES:
         return data  # passthrough of primitives
     elif is_dataclass(pytype):
+        decoded_fields = get_dataclass_type_hints(pytype)
         return pytype(**{
-            field.name: parse_json(field.type, data[to_camel(field.name)])
-            for field in dataclasses.fields(pytype)
+            name: parse_json(subtype, data[to_camel(name)])
+            for name, subtype in decoded_fields.items()
         })
     elif is_list_type(pytype):
         list_arg = pytype.__args__[0]

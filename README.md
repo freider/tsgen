@@ -13,9 +13,10 @@ Due to the feature incompleteness, hacky nature of the project and lack of curre
 You can install the package using a git reference, e.g.: `pip install git+git://github.com/freider/tsgen.git`.
 
 To enable the code generation cli tool, add the `tsgen.flask.cli_blueprint` to your flask app:
+
 ```python
 from flask import Flask
-from tsgen.flask import cli_blueprint
+from tsgen.flask_integration import cli_blueprint
 
 app = Flask(__name__)
 app.register_blueprint(cli_blueprint)
@@ -37,7 +38,7 @@ To prepare an endpoint for source generation, make sure it has a python return t
 from dataclasses import dataclass
 
 from flask import Flask
-from tsgen.flask import typed, cli_blueprint
+from tsgen.flask_integration import typed, cli_blueprint
 
 app = Flask(__name__)
 app.register_blueprint(cli_blueprint)
@@ -131,9 +132,11 @@ tsgen translates python *snake_case* field names and function names into *camelC
 
 ### "Hot reloading"
 Add a `dev_reload_hook` call at the bottom of your flask app file to have the client code be automatically generated whenever you change your code in flask `development` mode (i.e. every time that flask reloads the app)
+
 ```python
 from flask import Flask
-from tsgen.flask import dev_reload_hook
+from tsgen.flask_integration import dev_reload_hook
+
 app = Flask(__name__)
 
 # ... add routes
@@ -165,8 +168,8 @@ With the introduction of [PEP 563](https://www.python.org/dev/peps/pep-0563/) in
 ## TODO
 ### Major
 * More generic api support for other frameworks than Flask (starlette, fastapi?)
+* Support for non-json-standard datatypes serde - e.g. date/datetime data types
 
 ### Minor
 * Support for typed/casted url arguments in api routes
-* date/datetime data types
 * dict/object data types

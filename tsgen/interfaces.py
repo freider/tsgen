@@ -6,6 +6,7 @@ from typing import Optional, get_type_hints
 
 import jinja2
 from tsgen.formatting import to_pascal, to_camel
+from tsgen.typehints import get_dataclass_type_hints
 
 TS_INTERFACE_TEMPLATE = """
 interface {{name}} {
@@ -121,14 +122,12 @@ class TSTypeContext:
 
         assert dc not in self.dataclass_types and typename not in self.dataclass_types.values()
         self.dataclass_types[dc] = typename
-        dc_fields = dataclasses.fields(dc)
-        evaluated_annotations = get_type_hints(dc, localns=localns)
+        dc_type_hints = get_dataclass_type_hints(dc, localns=localns)
         fields = []
 
-        for field in dc_fields:
-            evaluated_type = evaluated_annotations[field.name]
-            field_ts_type = self.py_to_ts_type(evaluated_type, typename, localns=localns)
-            field_ts_name = to_camel(field.name)
+        for field_name, subtype in dc_type_hints.items():
+            field_ts_type = self.py_to_ts_type(subtype, typename, localns=localns)
+            field_ts_name = to_camel(field_name)
             fields.append((field_ts_name, field_ts_type))
 
         declaration_template = jinja2.Template(TS_INTERFACE_TEMPLATE)
