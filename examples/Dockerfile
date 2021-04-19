@@ -4,8 +4,8 @@ COPY pyproject.toml /src/
 COPY tsgen /src/tsgen
 RUN pip install /src/
 
-COPY examples/app.py /flask-root/
-ENV FLASK_APP=/flask-root/app.py
+COPY examples/api.py /flask-root/
+ENV FLASK_APP=/flask-root/api.py
 RUN flask tsgen build > api.ts
 
 

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 from flask import Flask, Response, request
 
-from tsgen.flask import typed, cli_blueprint
+from tsgen.flask import typed, cli_blueprint, dev_reload_hook
 
 app = Flask(__name__)
 app.register_blueprint(cli_blueprint)
@@ -25,13 +26,13 @@ class Bar:
     other_field: str
 
 
-@app.route("/api/bar/", methods=["POST"])
+@app.route("/api/bar", methods=["POST"])
 @typed()
 def create_bar(bar: Bar) -> Foo:
     return bar.sub_field
 
 
-@app.route("/api/raw_response", methods=["POST"])
+@app.route("/api/raw", methods=["POST"])
 @typed()
 def only_inject_endpoint(the_foo: Foo):
     assert the_foo.one_field == request.json["oneField"]
@@ -41,6 +42,9 @@ def only_inject_endpoint(the_foo: Foo):
 @app.route("/")
 def index():
     return app.send_static_file('index.html')
+
+
+dev_reload_hook(app, str(Path(__file__).parent / "frontend"))
 
 
 if __name__ == '__main__':

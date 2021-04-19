@@ -7,7 +7,7 @@ from tsgen.formatting import to_camel
 
 TS_FUNC_TEMPLATE = """
 export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
-  const resp = await fetch(`{{url_pattern}}`, {
+  {% if response_type_name != "void" %}const resp = {% endif %}await fetch(`{{url_pattern}}`, {
     method: '{{method}}'
     {%- if payload_name != None %},
     headers: {
@@ -17,8 +17,7 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
     {%- endif %}
   });
   {%- if response_type_name != "void" %}
-  const data: {{response_type_name}} = await resp.json();
-  return data;
+  return await resp.json();
   {%- endif %}
 }
 """

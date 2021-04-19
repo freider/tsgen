@@ -1,8 +1,14 @@
+import logging
+
+import sys
 from collections import defaultdict
 from functools import wraps
+from pathlib import Path
 from types import FunctionType
 
+import click
 import flask
+import jinja2
 from flask import request, jsonify, Blueprint
 from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
 from tsgen.interfaces import TSTypeContext
@@ -40,12 +46,19 @@ def typed():
     return generator
 
 
-def build_ts_api():
-    generated_ts = defaultdict(list)
+TS_FILE_PATTERN = """// Generated source code - do not modify this file
+{%- for entity in entities %}
+{{entity}}
+{% endfor %}
+"""
+
+
+def build_ts_api(app: flask.Flask):
+    client_function_ts = defaultdict(list)
     ts_contexts = defaultdict(TSTypeContext)  # one context per ts file
 
-    for rule in flask.current_app.url_map.iter_rules():
-        func = flask.current_app.view_functions[rule.endpoint]
+    for rule in app.url_map.iter_rules():
+        func = app.view_functions[rule.endpoint]
 
         if hasattr(func, "_ts_gen"):
             info: TSGenFunctionInfo = func._ts_gen
@@ -62,26 +75,56 @@ def build_ts_api():
             url_args = rule.arguments
 
             ts_function_code = build_ts_func(info, url_pattern, url_args, method, ts_context)
-            generated_ts[import_name].append(ts_function_code)
+            client_function_ts[import_name].append(ts_function_code)
 
-    for import_name, ts_snippets in generated_ts.items():
+    file_contents = {}
+    for import_name, client_functions in client_function_ts.items():
         ts_context = ts_contexts[import_name]
-        # TODO: actually output to files
-        print(f"// File: {import_name}.ts\n")
-
         interfaces = [
             ts_context.interfaces[ts_interface_name]
             for ts_interface_name in ts_context.natural_order()
         ]
 
-        print("\n\n".join(interfaces + ts_snippets))
-        print()
+        entities = interfaces + client_functions
+        file_contents[import_name] = jinja2.Template(TS_FILE_PATTERN).render(entities=entities)
+
+    return file_contents
+
+
+def save_api_to_files(root_dir: str, file_contents: dict[str, str]):
+    root_path = Path(root_dir)
+    for dotpath, content in file_contents.items():
+        ts_filename = dotpath.replace(".", "/") + ".ts"
+        file_path = root_path / ts_filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        with file_path.open("w", encoding="utf8") as fp:
+            fp.write(content)
+
+
+def build_and_save_api(app: flask.Flask, root_dir: str):
+    app.logger.info(f"Writing client code to {root_dir}")
+    file_contents = build_ts_api(app)
+    save_api_to_files(root_dir, file_contents)
 
 
 cli_blueprint = Blueprint("tsgen", __name__)
 
 
-@cli_blueprint.cli.command("build")
-def build():
-    build_ts_api()
+def dev_reload_hook(app: flask.Flask, root_dir: str):
+    """Rebuild typescript every time the flask app is (re)started
 
+    Call this at module scope in your flask app main file.
+    Only triggers in development mode.
+    """
+    if app.config["ENV"] != "development":
+        return
+    if sys.argv[-2:] == ["tsgen", "build"]:
+        return  # when running the explicit generation command
+
+    build_and_save_api(app, root_dir)
+
+
+@cli_blueprint.cli.command("build")
+@click.argument('root_dir', nargs=1)
+def build(root_dir):
+    build_and_save_api(flask.current_app, root_dir)

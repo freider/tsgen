@@ -1,22 +1,39 @@
 <body>
+<h2>Test results</h2>
+<table>
+
+</table>
 <script type="module">
-  import {createBar, getFoo, onlyInjectEndpoint} from "./api";
+  import {createBar, getFoo, onlyInjectEndpoint} from './api';
 
-  const body = document.getElementsByTagName("body")[0];
+  const tests = [
+    ['send param, receive payload', async () => {
+      const foo = await getFoo('world');
+      return foo.oneField === 'hello world';
+    }],
+    ['send payload, receive nothing', async () => {
+      const foo = await onlyInjectEndpoint({oneField: 'inject'});
+      return foo === undefined;
+    }],
+    ['send and receive payload', async () => {
+        const foo = await createBar({subField: {oneField: 'post'}, otherField: 'other'});
+        return foo.oneField === 'post';
+    }]
+  ]
+  tests.forEach(([testName, testFunc]) => {
+    const table = document.getElementsByTagName('table')[0];
+    const row = document.createElement('tr');
+    const label = document.createElement('td');
 
-  getFoo("world").then((foo) => {
-    const resultText = document.createTextNode(foo.oneField);
-    body.appendChild(resultText);
-  });
+    label.appendChild(document.createTextNode(testName));
+    label.setAttribute('style', 'background-color: yellow;')
+    row.appendChild(label);
+    table.appendChild(row);
 
-  createBar({subField: {oneField: "post"}, otherField: "other"}).then((foo) => {
-    const resultText = document.createTextNode(foo.oneField);
-    body.appendChild(resultText);
-  });
-
-  onlyInjectEndpoint({oneField: "inject"}).then(() => {
-    const successText = document.createTextNode("inject");
-    body.appendChild(successText);
-  });
+    testFunc().then((result) => {
+      const resultColor = result? 'green': 'red';
+      label.setAttribute('style', `background-color: ${resultColor}`)
+    });
+  })
 </script>
 </body>
