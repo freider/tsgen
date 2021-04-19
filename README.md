@@ -148,16 +148,15 @@ Together with HMR support on the bundler side (using parcel or webpack or simila
 
 
 ## Dev/Testing instructions
-The examples dir serves as a manual integration test as well. To build and run it using docker, run the following command:
+The examples dir serves as a simple development environment for the library, as well as a "manual" integration test. To build and run it using docker-compose, run the following command:
 ```shell
-docker build -t freider/tsgen -f examples/Dockerfile .git
-docker run -p 5000:5000 -t freider/tsgen
+docker-compose -f docker-compose.dev.yml up --build
 ```
-You can then inspect the test results by navigating to http://localhost:5000 with the server running.
+You can then inspect the test results by navigating to http://localhost:1234
 
 The architecture of the simple example is similar to what you might have in production as well:
 * A rest-like api defined in flask
-* A frontend in html + typescript, including the tsgen-generated api client code
+* A frontend in html + js/typescript, including the tsgen-generated api client code
 * Node + Parcel to build a deliverable html bundle.
 
 ## Gotchas

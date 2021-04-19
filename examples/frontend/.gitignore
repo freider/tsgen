@@ -2,5 +2,5 @@ node_modules
 *.js
 package-lock.json
 .parcel-cache
-api.ts
+generated
 dist

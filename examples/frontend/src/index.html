@@ -4,7 +4,7 @@
 
 </table>
 <script type="module">
-  import {createBar, getFoo, onlyInjectEndpoint} from './api';
+  import {createBar, failing, getFoo, onlyInjectEndpoint} from '../generated/api';
 
   const tests = [
     ['send param, receive payload', async () => {
@@ -16,9 +16,17 @@
       return foo === undefined;
     }],
     ['send and receive payload', async () => {
-        const foo = await createBar({subField: {oneField: 'post'}, otherField: 'other'});
-        return foo.oneField === 'post';
-    }]
+      const foo = await createBar({subField: {oneField: 'post'}, otherField: 'other'});
+      return foo.oneField === 'post';
+    }],
+    ['failing request fails', async () => {
+      try {
+        await failing();
+      } catch (e) {
+        return true;
+      }
+      return false;
+    }],
   ]
   tests.forEach(([testName, testFunc]) => {
     const table = document.getElementsByTagName('table')[0];

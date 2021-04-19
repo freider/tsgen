@@ -1,9 +1,10 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
 from flask import Flask, Response, request
 
-from tsgen.flask import typed, cli_blueprint, dev_reload_hook
+from tsgen.flask_integration import typed, cli_blueprint, dev_reload_hook
 
 app = Flask(__name__)
 app.register_blueprint(cli_blueprint)
@@ -39,12 +40,14 @@ def only_inject_endpoint(the_foo: Foo):
     return Response(status=201)
 
 
-@app.route("/")
-def index():
-    return app.send_static_file('index.html')
+@app.route("/api/failing")
+@typed()
+def failing():
+    return Response(status=500)
 
 
-dev_reload_hook(app, str(Path(__file__).parent / "frontend"))
+# enable hot reloads in development mode
+dev_reload_hook(app, str(Path(__file__).parent / "frontend/generated"))
 
 
 if __name__ == '__main__':

@@ -1,28 +1,23 @@
-FROM python:3.9-slim AS backend
-# Set up flask project and build typescript client code
+FROM python:3.9-slim AS api_server
+#  Set up flask project and build typescript client code
 COPY pyproject.toml /src/
 COPY tsgen /src/tsgen
 RUN pip install /src/
 
 COPY examples/api.py /flask-root/
 ENV FLASK_APP=/flask-root/api.py
-RUN flask tsgen build /generated
-
-
-FROM node:15-slim AS js
-# build static html/js bundle
-COPY examples/frontend /src
-COPY --from=backend /generated/api.ts /src/
-WORKDIR /src/
-RUN npm install
-RUN npx tsc --noEmit  #type check
-RUN npx parcel build main.html
-
-FROM backend AS server
-# serve both static bundle and api
 ENV FLASK_HOST=0.0.0.0
 ENV FLASK_ENV=development
-
-COPY --from=js /src/index.html /flask-root/static/
+RUN flask tsgen build /flask-root/frontend/generated
 EXPOSE 5000
 CMD ["flask", "run", "--host", "0.0.0.0"]
+
+FROM node:15-slim AS frontend
+#  build/serve static html/js bundle
+COPY examples/frontend /node-root
+WORKDIR /node-root/
+RUN npm install
+COPY --from=api_server /flask-root/frontend/generated /node-root/generated
+RUN npx tsc --noEmit  #  type check
+ENV EXAMPLE_API_ENDPOINT="api:5000"
+CMD ["npx", "parcel", "src/index.html"]

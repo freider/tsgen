@@ -46,6 +46,15 @@ def typed():
 
 
 TS_FILE_PATTERN = """// Generated source code - do not modify this file
+
+class ApiError extends Error {
+  constructor(public message: string, public response: Response) {
+    super(message);
+    // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-doesnt-extending-built-ins-like-error-array-and-map-work
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 {%- for entity in entities %}
 {{entity}}
 {% endfor %}

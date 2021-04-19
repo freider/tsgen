@@ -6,9 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Elias Freider",
   "license": "ISC",
   "devDependencies": {
+    "http-proxy-middleware": "^1.2.0",
     "parcel": "^2.0.0-beta.2",
     "typescript": "^4.2.4"
   }

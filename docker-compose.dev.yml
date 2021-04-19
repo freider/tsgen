@@ -1,0 +1,32 @@
+services:
+  api:
+    image: freider/tsgen:api_server
+    build:
+      context: .
+      dockerfile: examples/Dockerfile
+      target: api_server
+    # the volumes are not required, but enable a smooth development environment
+    # where changes are immediately reflected in the containers
+    volumes:
+    - "./examples/api.py:/flask-root/api.py:ro"
+    - "generated:/flask-root/frontend/generated"
+    - "./tsgen:/usr/local/lib/python3.9/site-packages/tsgen/"
+
+  frontend:
+    image: freider/tsgen:frontend
+    build:
+      context: .
+      dockerfile: examples/Dockerfile
+      target: frontend
+    depends_on:
+      - api
+    ports:
+      - "1234:1234"
+    # the volumes are not required, but enable a smooth development environment
+    # where changes are immediately reflected in the containers
+    volumes:
+    - "generated:/node-root/generated:ro"
+    - "./examples/frontend/src:/node-root/src/:ro"
+
+volumes:
+  generated:
