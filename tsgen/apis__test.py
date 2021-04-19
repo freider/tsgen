@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 from tsgen import apis
@@ -5,11 +6,12 @@ from tsgen.apis import get_endpoint_info
 from tsgen.interfaces import TSTypeContext
 
 
-def test_api_gen():
-    @dataclass
-    class Foo:
-        pass
+@dataclass
+class Foo:
+    pass
 
+
+def test_api_gen():
     def get_foo(my_id) -> Foo:
         return Foo()
 

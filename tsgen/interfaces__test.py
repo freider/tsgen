@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 from tsgen.interfaces import TSTypeContext
@@ -42,7 +43,7 @@ def test_deep_nested_dataclass():
     class Foo:
         my_field: Bar
 
-    assert t.py_to_ts_type(Foo) == "Foo"
+    assert t.py_to_ts_type(Foo, localns=locals()) == "Foo"
     assert t.interfaces["Foo"] == """
 interface Foo {
   myField: Bar;
@@ -63,6 +64,7 @@ interface Baz {
 
 def test_list_of_dataclass():
     t = TSTypeContext()
+
     @dataclass
     class Bar:
         my_field: int
@@ -71,5 +73,5 @@ def test_list_of_dataclass():
     class Foo:
         bars: list[Bar]
 
-    assert t.py_to_ts_type(Foo) == "Foo"
+    assert t.py_to_ts_type(Foo, localns=locals()) == "Foo"
     assert t.topological_dependencies("Foo") == ["Bar", "Foo"]

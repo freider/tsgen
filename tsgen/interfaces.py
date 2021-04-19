@@ -2,7 +2,7 @@ import dataclasses
 from collections import defaultdict
 from dataclasses import is_dataclass
 from types import GenericAlias
-from typing import Optional
+from typing import Optional, get_type_hints
 
 import jinja2
 from tsgen.formatting import to_pascal, to_camel
@@ -14,6 +14,7 @@ interface {{name}} {
 {%- endfor %}
 }
 """
+
 
 def is_list_type(t: type):
     return isinstance(t, GenericAlias) and t.__origin__ == list
@@ -30,6 +31,7 @@ PRIMITIVE_TYPES: dict[type, str] = {
     float: "number",
     bool: "boolean",
 }
+
 
 class TSTypeContext:
     """
@@ -96,34 +98,36 @@ class TSTypeContext:
 
         return result
 
-    def py_to_ts_type(self, t: type, parent_ts_type: Optional[str] = None):
+    def py_to_ts_type(self, t: type, parent_ts_type: str = None, localns: dict = None):
         if is_dataclass(t):
             if t not in self.dataclass_types:
-                self._add_interface(t)
+                self._add_interface(t, localns)
             ts_name = self.dataclass_types[t]
             self.dependencies[parent_ts_type].add(ts_name)
             return ts_name
         if is_list_type(t):
             #  e.g. list[int]
-            return self._list_type(t, parent_ts_type)
+            return self._list_type(t, parent_ts_type, localns)
         return PRIMITIVE_TYPES[t]
 
-    def _list_type(self, t: GenericAlias, parent_ts_type: Optional[str] = None):
+    def _list_type(self, t: GenericAlias, parent_ts_type: Optional[str] = None, localns=None):
         assert len(t.__args__) == 1
         argtype = t.__args__[0]
-        subtype = self.py_to_ts_type(argtype, parent_ts_type)
+        subtype = self.py_to_ts_type(argtype, parent_ts_type, localns=localns)
         return f"{subtype}[]"
 
-    def _add_interface(self, dc):
+    def _add_interface(self, dc, localns = None):
         typename = to_pascal(dc.__name__)
 
         assert dc not in self.dataclass_types and typename not in self.dataclass_types.values()
         self.dataclass_types[dc] = typename
         dc_fields = dataclasses.fields(dc)
+        evaluated_annotations = get_type_hints(dc, localns=localns)
         fields = []
 
         for field in dc_fields:
-            field_ts_type = self.py_to_ts_type(field.type, typename)
+            evaluated_type = evaluated_annotations[field.name]
+            field_ts_type = self.py_to_ts_type(evaluated_type, typename, localns=localns)
             field_ts_name = to_camel(field.name)
             fields.append((field_ts_name, field_ts_type))
 

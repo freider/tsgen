@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import is_dataclass
-from typing import Optional
+from typing import Optional, get_type_hints
 
 import jinja2
 from tsgen.formatting import to_camel
@@ -64,7 +64,7 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
 
 
 def get_endpoint_info(func):
-    annotations = func.__annotations__.copy()
+    annotations = get_type_hints(func)
     return_value_py_type = annotations.pop("return", None)
     payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
     assert len(payloads) <= 1

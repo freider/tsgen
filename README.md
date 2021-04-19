@@ -157,12 +157,14 @@ The architecture of the simple example is similar to what you might have in prod
 * A frontend in html + typescript, including the tsgen-generated api client code
 * Node + Parcel to build a deliverable html bundle.
 
+## Gotchas
+### Postponed annotations
+With the introduction of [PEP 563](https://www.python.org/dev/peps/pep-0563/) in Python 3.10 (or using `from __future__ import annotations`) types are no longer evaluated at the time they are declared. This can sometimes break the type inferrence, if you for example declare your routes as closures inside of other functions.
 
 
 ## TODO
 ### Major
 * More generic api support for other frameworks than Flask (starlette, fastapi?)
-* Support (partial?) for postponed annotation evaluation ([PEP 563](https://www.python.org/dev/peps/pep-0563/))
 
 ### Minor
 * Support for typed/casted url arguments in api routes
