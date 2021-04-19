@@ -21,7 +21,6 @@ export const getFoo = async (myId: string): Promise<Foo> => {
   const resp = await fetch(`/api/foo/${myId}`, {
     method: 'GET'
   });
-  const data: Foo = await resp.json();
-  return data;
+  return await resp.json();
 }"""
     assert set(ts_context.interfaces.keys()) == {"Foo"}
