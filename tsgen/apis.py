@@ -4,6 +4,7 @@ from typing import Optional, get_type_hints
 
 import jinja2
 from tsgen.formatting import to_camel
+from tsgen.typetree import get_type_tree, AbstractNode
 
 TS_FUNC_TEMPLATE = """
 export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
@@ -30,9 +31,9 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
 class TSGenFunctionInfo:
     import_name: str
     ts_function_name: str
-    return_value_py_type: type
+    return_type_tree: Optional[AbstractNode]
 
-    payload: Optional[tuple[str, type]]
+    payload: Optional[tuple[str, AbstractNode]]
 
 
 def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_context):
@@ -42,14 +43,14 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
         url_pattern = url_pattern.replace(f"<{arg}>", f"${{{ts_arg_name}}}")
         ts_args.append((ts_arg_name, "string"))
 
-    if info.return_value_py_type is None:
+    if info.return_type_tree is None:
         ts_return_type = "void"
     else:
-        ts_return_type = ts_context.py_to_ts_type(info.return_value_py_type)
+        ts_return_type = info.return_type_tree.ts_repr(ts_context)
 
     if info.payload:
-        payload_name, payload_py_type = info.payload
-        ts_payload_type = ts_context.py_to_ts_type(payload_py_type)
+        payload_name, payload_type_tree = info.payload
+        ts_payload_type = payload_type_tree.ts_repr(ts_context)
         payload_arg_name = to_camel(payload_name)
         ts_args.append((payload_arg_name, ts_payload_type))
     else:
@@ -66,14 +67,25 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern, url_args, method, ts_con
     return ts_function_code
 
 
-def get_endpoint_info(func):
+def get_endpoint_info(func, localns=None):
     annotations = get_type_hints(func)
     return_value_py_type = annotations.pop("return", None)
+    return_type_tree = None
+    if return_value_py_type is not None:
+        return_type_tree = get_type_tree(return_value_py_type, localns=localns)
+
     payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
     assert len(payloads) <= 1
+
+    for name, payload_type in payloads.items():
+        maybe_payload = (name, get_type_tree(payload_type, localns=localns))
+        break
+    else:
+        maybe_payload = None
+
     return TSGenFunctionInfo(
         import_name=func.__module__,
         ts_function_name=to_camel(func.__name__),
-        return_value_py_type=return_value_py_type,
-        payload=list(payloads.items())[0] if payloads else None
+        return_type_tree=return_type_tree,
+        payload=maybe_payload
     )

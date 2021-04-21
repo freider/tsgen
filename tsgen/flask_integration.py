@@ -10,8 +10,8 @@ import sys
 from flask import request, jsonify, Blueprint
 
 from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
-from tsgen.interfaces import TSTypeContext
-from tsgen.serde import parse_json, prepare_json
+from tsgen.code_snippet_context import CodeSnippetContext
+from tsgen.typetree import AbstractNode
 
 
 def typed():
@@ -31,14 +31,15 @@ def typed():
             # if dataclass arg has been specified, build one and add it as an arg
             new_kwargs = kwargs.copy()
             if info.payload:
-                payload_name, payload_type = info.payload
-                new_kwargs[payload_name] = parse_json(payload_type, request.json)
+                payload_tree: AbstractNode
+                payload_name, payload_tree = info.payload
+                new_kwargs[payload_name] = payload_tree.parse_json(request.json)
 
             resp = func(**new_kwargs)
             # always jsonify, so that endpoint can return a single dataclass
-            if info.return_value_py_type is None:
+            if info.return_type_tree is None:
                 return resp  # unannotated return value returns raw response
-            return jsonify(prepare_json(resp))
+            return jsonify(info.return_type_tree.prepare_json(resp))
 
         return new_f
 
@@ -63,7 +64,7 @@ class ApiError extends Error {
 
 def build_ts_api(app: flask.Flask):
     client_function_ts = defaultdict(list)
-    ts_contexts = defaultdict(TSTypeContext)  # one context per ts file
+    ts_contexts = defaultdict(CodeSnippetContext)  # one context per ts file
 
     for rule in app.url_map.iter_rules():
         func = app.view_functions[rule.endpoint]
@@ -89,7 +90,7 @@ def build_ts_api(app: flask.Flask):
     for import_name, client_functions in client_function_ts.items():
         ts_context = ts_contexts[import_name]
         interfaces = [
-            ts_context.interfaces[ts_interface_name]
+            ts_context.get_snippet(ts_interface_name)
             for ts_interface_name in ts_context.natural_order()
         ]
 
