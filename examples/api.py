@@ -55,8 +55,8 @@ class DateObj:
 
 @app.route("/api/next-day", methods=["POST"])
 @typed()
-def next_day(date_obj: DateObj) -> DateObj:  # todo: add support for non-dataclass payloads
-    return DateObj(date_obj.dt + datetime.timedelta(1))
+def next_day(date_obj: DateObj) -> datetime.datetime:  # todo: add support for non-dataclass payloads
+    return date_obj.dt + datetime.timedelta(1)
 
 
 # enable hot reloads in development mode
