@@ -113,8 +113,6 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 }
 ```
 
-Data injection currently only supports a single dataclass injection representing a single top level json object in the request body.
-
 ### Currently supported type translations
 
 | Python type   | Typescript type | Note   |
@@ -161,13 +159,12 @@ The architecture of the simple example is similar to what you might have in prod
 
 ## Gotchas
 ### Postponed annotations
-With the introduction of [PEP 563](https://www.python.org/dev/peps/pep-0563/) in Python 3.10 (or using `from __future__ import annotations`) types are no longer evaluated at the time they are declared. This can sometimes break the type inferrence, if you for example declare your routes as closures inside of other functions.
+With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-0563/) in Python 3.11 (or using `from __future__ import annotations`) types are no longer evaluated at the time they are declared. This can sometimes break the type inference, if you for example declare your routes as closures inside other functions.
 
 
 ## TODO
 ### Major
 * More generic api support for other frameworks than Flask (starlette, fastapi?)
-* Support for non-json-standard datatypes serde - e.g. date/datetime data types
 
 ### Minor
 * Support for typed/casted url arguments in api routes
