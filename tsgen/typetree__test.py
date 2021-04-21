@@ -20,8 +20,8 @@ def test_list():
 def test_datetime():
     assert get_type_tree(datetime.datetime) == DateTime()
     source = datetime.datetime(2020, 10, 1, 3, 2, 1)
-    assert DateTime().prepare_json(source) == "2020-10-01T03:02:01Z"
-    assert DateTime().parse_json("2020-10-01T03:02:01Z") == source
+    assert DateTime().create_dto(source) == "2020-10-01T03:02:01Z"
+    assert DateTime().parse_dto("2020-10-01T03:02:01Z") == source
 
 
 def test_object():

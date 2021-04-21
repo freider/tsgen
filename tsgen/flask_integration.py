@@ -33,13 +33,13 @@ def typed():
             if info.payload:
                 payload_tree: AbstractNode
                 payload_name, payload_tree = info.payload
-                new_kwargs[payload_name] = payload_tree.parse_json(request.json)
+                new_kwargs[payload_name] = payload_tree.parse_dto(request.json)
 
             response = func(**new_kwargs)
             # always jsonify, so that endpoint can return a single dataclass
             if info.return_type_tree is None:
                 return response  # unannotated return value returns raw response
-            return jsonify(info.return_type_tree.prepare_json(response))
+            return jsonify(info.return_type_tree.create_dto(response))
 
         return new_f
 

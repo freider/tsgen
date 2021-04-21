@@ -51,13 +51,13 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str]
         return_expression = None
     else:
         ts_return_type = info.return_type_tree.ts_repr(ctx)
-        return_expression = info.return_type_tree.ts_parse_json(ctx, "dto")
+        return_expression = info.return_type_tree.ts_parse_dto(ctx, "dto")
 
     if info.payload:
         payload_name, payload_type_tree = info.payload
         ts_payload_type = payload_type_tree.ts_repr(ctx)
         payload_arg_name = to_camel(payload_name)
-        payload_expression = payload_type_tree.ts_prep_json(ctx, payload_arg_name)
+        payload_expression = payload_type_tree.ts_create_dto(ctx, payload_arg_name)
         ts_args.append((payload_arg_name, ts_payload_type))
     else:
         payload_expression = None
