@@ -24,15 +24,17 @@ def typed():
     :param import_name: Determines which file the generated typescript will go into
     """
     def generator(func: FunctionType):
-        func._ts_gen = info = get_endpoint_info(func)
+        info = get_endpoint_info(func)
+        func._ts_gen = info
 
         @wraps(func)
         def new_f(**kwargs):
             # if dataclass arg has been specified, build one and add it as an arg
             new_kwargs = kwargs.copy()
-            if info.payload:
-                payload_tree: AbstractNode
-                payload_name, payload_tree = info.payload
+            payload_args = set(info.payloads.keys()) - set(kwargs.keys())
+            if payload_args:
+                payload_name = list(payload_args)[0]
+                payload_tree = info.payloads[payload_name]
                 new_kwargs[payload_name] = payload_tree.parse_dto(request.json)
 
             response = func(**new_kwargs)

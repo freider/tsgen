@@ -77,7 +77,7 @@ class List(AbstractNode):
         return f"{ts_expression}.map(item => {self.element_node.ts_create_dto(ctx, 'item')})"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return f"{ts_expression}.map(item => {self.element_node.ts_parse_dto(ctx, 'item')})"
+        return f"{ts_expression}.map((item: {self.element_node.ts_repr(ctx)}) => {self.element_node.ts_parse_dto(ctx, 'item')})"
 
 
 TS_INTERFACE_TEMPLATE = """

@@ -36,7 +36,7 @@ class TSGenFunctionInfo:
     ts_function_name: str
     return_type_tree: Optional[AbstractNode]
 
-    payload: Optional[tuple[str, AbstractNode]]
+    payloads: dict[str, AbstractNode]
 
 
 def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str], method: str, ctx: CodeSnippetContext):
@@ -53,8 +53,11 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str]
         ts_return_type = info.return_type_tree.ts_repr(ctx)
         return_expression = info.return_type_tree.ts_parse_dto(ctx, "dto")
 
-    if info.payload:
-        payload_name, payload_type_tree = info.payload
+    payload_args = set(info.payloads.keys()) - set(url_args)
+    assert len(payload_args) <= 1
+    if payload_args:
+        payload_name = list(payload_args)[0]
+        payload_type_tree = info.payloads[payload_name]
         ts_payload_type = payload_type_tree.ts_repr(ctx)
         payload_arg_name = to_camel(payload_name)
         payload_expression = payload_type_tree.ts_create_dto(ctx, payload_arg_name)
@@ -74,25 +77,18 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str]
     return ts_function_code
 
 
-def get_endpoint_info(func, localns=None):
+def get_endpoint_info(func, localns=None) -> TSGenFunctionInfo:
     annotations = get_type_hints(func)
     return_value_py_type = annotations.pop("return", None)
     return_type_tree = None
     if return_value_py_type is not None:
         return_type_tree = get_type_tree(return_value_py_type, localns=localns)
 
-    payloads = {n: t for n, t in annotations.items() if is_dataclass(t)}
-    assert len(payloads) <= 1
-
-    for name, payload_type in payloads.items():
-        maybe_payload = (name, get_type_tree(payload_type, localns=localns))
-        break
-    else:
-        maybe_payload = None
+    payloads = {n: get_type_tree(t, localns=localns) for n, t in annotations.items()}
 
     return TSGenFunctionInfo(
         import_name=func.__module__,
         ts_function_name=to_camel(func.__name__),
         return_type_tree=return_type_tree,
-        payload=maybe_payload
+        payloads=payloads
     )

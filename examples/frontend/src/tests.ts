@@ -1,4 +1,4 @@
-import {createBar, failing, getFoo, nextDay, onlyInjectEndpoint} from '../generated/api';
+import {createBar, failing, getFoo, nextDay, onlyInjectEndpoint, reverse} from '../generated/api';
 
 const tests = [
   ['send param, receive payload', async () => {
@@ -22,10 +22,13 @@ const tests = [
     return false;
   }],
   ['send and receive datetime', async () => {
-    const dateObj = {dt: new Date("2020-02-01T03:02:01Z")};
-    const ret = await nextDay(dateObj);
+    const ret = await nextDay(new Date("2020-02-01T03:02:01Z"));
     return ret.getTime() === new Date("2020-02-02T03:02:01Z").getTime();
-  }]
+  }],
+  ['send and receive list', async () => {
+    const ret = await reverse([37, 13]);
+    return ret.length == 2 && ret[0] == 13 && ret[1] == 37
+  }],
 ]
 
 export default tests;
