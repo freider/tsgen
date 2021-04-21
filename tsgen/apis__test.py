@@ -18,7 +18,7 @@ def test_api_gen():
     ts_context = CodeSnippetContext()
     info = get_endpoint_info(get_foo)
     func_code = apis.build_ts_func(info, "/api/foo/<my_id>", ["my_id"], "GET", ts_context)
-    assert func_code == """
+    expected_func_code = """
 export const getFoo = async (myId: string): Promise<Foo> => {
   const response = await fetch(`/api/foo/${myId}`, {
     method: 'GET'
@@ -26,6 +26,8 @@ export const getFoo = async (myId: string): Promise<Foo> => {
   if (!response.ok) {
     throw new ApiError("HTTP status code: " + response.status, response);
   }
-  return await response.json();
+  const dto = await response.json();
+  return {};
 }"""
+    assert func_code == expected_func_code
     assert ts_context.natural_order() == ["Foo"]

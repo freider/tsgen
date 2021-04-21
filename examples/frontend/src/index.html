@@ -4,7 +4,7 @@
 
 </table>
 <script type="module">
-  import {createBar, failing, getFoo, onlyInjectEndpoint} from '../generated/api';
+  import {createBar, failing, getFoo, nextDay, onlyInjectEndpoint} from '../generated/api';
 
   const tests = [
     ['send param, receive payload', async () => {
@@ -27,6 +27,11 @@
       }
       return false;
     }],
+    ['send and receive datetime', async () => {
+      const dateObj = {dt: new Date("2020-02-01T03:02:01Z")};
+      const ret = await nextDay(dateObj);
+      return ret.dt.getTime() === new Date("2020-02-02T03:02:01Z").getTime();
+    }]
   ]
   tests.forEach(([testName, testFunc]) => {
     const table = document.getElementsByTagName('table')[0];

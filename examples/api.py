@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import datetime
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,6 +46,17 @@ def only_inject_endpoint(the_foo: Foo):
 @typed()
 def failing():
     return Response(status=400)
+
+
+@dataclass()
+class DateObj:
+    dt: datetime.datetime
+
+
+@app.route("/api/next-day", methods=["POST"])
+@typed()
+def next_day(date_obj: DateObj) -> DateObj:  # todo: add support for non-dataclass payloads
+    return DateObj(date_obj.dt + datetime.timedelta(1))
 
 
 # enable hot reloads in development mode

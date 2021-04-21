@@ -1,6 +1,7 @@
+import datetime
 from dataclasses import dataclass
 
-from tsgen.typetree import get_type_tree, Primitive, List, Object
+from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime
 from tsgen.code_snippet_context import CodeSnippetContext
 
 
@@ -14,6 +15,13 @@ def test_primitives():
 def test_list():
     assert get_type_tree(list[str]) == List(Primitive(str))
     assert get_type_tree(list[list[bool]]) == List(List(Primitive(bool)))
+
+
+def test_datetime():
+    assert get_type_tree(datetime.datetime) == DateTime()
+    source = datetime.datetime(2020, 10, 1, 3, 2, 1)
+    assert DateTime().prepare_json(source) == "2020-10-01T03:02:01Z"
+    assert DateTime().parse_json("2020-10-01T03:02:01Z") == source
 
 
 def test_object():

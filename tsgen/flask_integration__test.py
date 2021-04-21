@@ -36,7 +36,7 @@ def request_response_endpoint(the_foo: Foo) -> Bar:
 
 
 def test_request_response(client):
-    resp: test_app.response_class = client.post(
+    response: test_app.response_class = client.post(
         "/api/request_response_endpoint",
         data=json.dumps({
             "otherField": "hello",
@@ -46,8 +46,8 @@ def test_request_response(client):
         }),
         content_type="application/json"
     )
-    assert resp.status_code == 200
-    assert {"oneField": "world"} == resp.json
+    assert response.status_code == 200
+    assert {"oneField": "world"} == response.json
 
 
 @test_app.route("/api/raw_response", methods=["POST"])
@@ -59,7 +59,7 @@ def raw_response_endpoint(the_foo: Foo):
 
 
 def test_raw_response(client):
-    resp: test_app.response_class = client.post(
+    response: test_app.response_class = client.post(
         "/api/raw_response",
         data=json.dumps({
             "otherField": "hello",
@@ -69,5 +69,5 @@ def test_raw_response(client):
         }),
         content_type="application/json"
     )
-    assert resp.status_code == 201
-    assert resp.data == b''
+    assert response.status_code == 201
+    assert response.data == b''
