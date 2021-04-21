@@ -115,13 +115,14 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 
 ### Currently supported type translations
 
-| Python type   | Typescript type | Note   |
-| ------------- | --------------- | ------ |
-| dataclass     | interface       |        |
-| int           | number          |        |
-| float         | number          |        |
-| bool          | boolean         |        |
-| list          | Array           |*type*[]|
+| Python type          | Typescript type   | Note                       |
+| -------------        | ---------------   | -----------------------    |
+| `dataclass`          | `interface`       |                            |
+| `int`                | `number`          |                            |
+| `float`              | `number`          |                            |
+| `bool`               | `boolean`         |                            |
+| `list[T]`            | `T[]`             |                            |
+| `datetime.datetime`  | `Date`            | Using ISO 8601 string DTOs |  
 
 It should be relatively straight forward to add support for additional data types as needs arises (e.g. dicts and date/datetime objects)
 
