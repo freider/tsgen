@@ -48,11 +48,6 @@ def failing():
     return Response(status=400)
 
 
-@dataclass()
-class DateObj:
-    dt: datetime.datetime
-
-
 @app.route("/api/next-day", methods=["POST"])
 @typed()
 def next_day(dt: datetime.datetime) -> datetime.datetime:
