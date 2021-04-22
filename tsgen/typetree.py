@@ -78,7 +78,9 @@ class List(AbstractNode):
         return f"{ts_expression}.map(item => {sub_expression})"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return f"{ts_expression}.map((item: {self.element_node.ts_repr(ctx)}) => {self.element_node.ts_parse_dto(ctx, 'item')})"
+        subtype = self.element_node.ts_repr(ctx)
+        dto_parsing_code = self.element_node.ts_parse_dto(ctx, "item")
+        return f"{ts_expression}.map((item: {subtype}) => {dto_parsing_code})"
 
 
 TS_INTERFACE_TEMPLATE = """
@@ -210,8 +212,8 @@ type_registry = [Primitive, List, Object, DateTime]
 
 
 def get_dataclass_type_hints(dc, localns=None):
-    annotations = get_type_hints(dc, localns=localns)
+    dc_types = get_type_hints(dc, localns=localns)
     return {
-        field.name: annotations[field.name]
+        field.name: dc_types[field.name]
         for field in dataclasses.fields(dc)
     }

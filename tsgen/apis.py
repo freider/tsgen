@@ -1,5 +1,4 @@
 import dataclasses
-from dataclasses import is_dataclass
 from typing import Optional, get_type_hints
 
 import jinja2

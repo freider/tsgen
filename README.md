@@ -49,10 +49,10 @@ class Foo:
     one_field: str
 
 
-@app.route("/foo/<id>")
+@app.route("/foo/<foo_id>")
 @typed()
-def get_foo(id) -> Foo:
-    return Foo(one_field=f"hello {id}")
+def get_foo(foo_id) -> Foo:
+    return Foo(one_field=f"hello {foo_id}")
 ```
 __IMPORTANT__: The `typed` decorator must currently be applied before to the flask endpoint registration. This means it must be written after the `route` decorator in source code order.
 
@@ -169,5 +169,8 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 
 ### Minor
 * Support for typed/casted url arguments in api routes
-* dict/object data types
-* Define dto types in typescript to get typechecking on dto encode/decode code
+* New types
+    * Support for `dict\[T, U\]`
+    * Support for `TypedDict`
+    * Support for `Optional\[T]`
+    * Support for "*any*" untyped subtrees

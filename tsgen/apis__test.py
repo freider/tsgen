@@ -12,6 +12,7 @@ class Foo:
 
 
 def test_api_gen():
+    # noinspection PyUnusedLocal
     def get_foo(my_id) -> Foo:
         return Foo()
 

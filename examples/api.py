@@ -17,10 +17,10 @@ class Foo:
     one_field: str
 
 
-@app.route("/api/foo/<id>")
+@app.route("/api/foo/<foo_id>")
 @typed()
-def get_foo(id) -> Foo:
-    return Foo(one_field=f"hello {id}")
+def get_foo(foo_id) -> Foo:
+    return Foo(one_field=f"hello {foo_id}")
 
 
 @dataclass

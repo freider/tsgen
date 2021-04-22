@@ -6,6 +6,7 @@ from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, Abs
 from tsgen.code_snippet_context import CodeSnippetContext
 
 
+# noinspection PyAbstractClass
 class DummyTypeNode(AbstractNode):
     """Used for generic testing"""
 
