@@ -74,7 +74,8 @@ class List(AbstractNode):
         return [self.element_node.create_dto(it) for it in pystruct]
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return f"{ts_expression}.map(item => {self.element_node.ts_create_dto(ctx, 'item')})"
+        sub_expression = self.element_node.ts_create_dto(ctx, 'item')
+        return f"{ts_expression}.map(item => {sub_expression})"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         return f"{ts_expression}.map((item: {self.element_node.ts_repr(ctx)}) => {self.element_node.ts_parse_dto(ctx, 'item')})"
@@ -199,8 +200,9 @@ class DateTime(AbstractNode):
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         prep_function_name = "formatISODateString"
-        iso_formatter_ts = f"const {prep_function_name} = (d: Date): string => d.toISOString().split('.')[0] + 'Z';"
-        ctx.add(prep_function_name, iso_formatter_ts)
+        if prep_function_name not in ctx:
+            iso_formatter_ts = f"const {prep_function_name} = (d: Date): string => d.toISOString().split('.')[0] + 'Z';"
+            ctx.add(prep_function_name, iso_formatter_ts)
         return f"{prep_function_name}({ts_expression})"
 
 

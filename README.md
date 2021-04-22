@@ -24,7 +24,7 @@ app.register_blueprint(cli_blueprint)
 The blueprint registers no routes, but adds the `tsgen` group of command line tools to your flask app (e.g. `flask tsgen build`)
 
 ## Features
-* Generation of typescript interfaces based on Python data classes ([PEP 557](https://www.python.org/dev/peps/pep-0557/)).
+* Generation of typescript interfaces based on Python type annotations, including dataclasses ([PEP 557](https://www.python.org/dev/peps/pep-0557/)).
 * Generation of typescript client side accessor functions using `fetch` to get/post typed data to/from flask routes.
 * Payload data injection for flask views, to access http body payload data as typed data instead of untyped json-like structures
 
@@ -170,3 +170,4 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 ### Minor
 * Support for typed/casted url arguments in api routes
 * dict/object data types
+* Define dto types in typescript to get typechecking on dto encode/decode code

@@ -11,7 +11,6 @@ from flask import request, jsonify, Blueprint
 
 from tsgen.apis import build_ts_func, TSGenFunctionInfo, get_endpoint_info
 from tsgen.code_snippet_context import CodeSnippetContext
-from tsgen.typetree import AbstractNode
 
 
 def typed():
@@ -20,8 +19,6 @@ def typed():
     * Mark a view for typescript client code generation
     * Inject any dataclass argument by parsing the request payload
     * Allow the endpoint to return a dataclass as the top level return value
-
-    :param import_name: Determines which file the generated typescript will go into
     """
     def generator(func: FunctionType):
         info = get_endpoint_info(func)
@@ -64,7 +61,12 @@ class ApiError extends Error {
 """
 
 
-def build_ts_api(app: flask.Flask):
+def build_ts_api(app: flask.Flask) -> dict[str, str]:
+    """Generate typescript clients and types for a flask app
+
+    :param app: Flask app with @typed()-decorated api routes
+    :return: dictionary {filename: typescript_source_code}
+    """
     client_function_ts = defaultdict(list)
     ts_contexts = defaultdict(CodeSnippetContext)  # one context per ts file
 

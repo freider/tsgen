@@ -1,11 +1,13 @@
 from __future__ import annotations
+
+import datetime
 import json
 from dataclasses import dataclass
 
 import pytest
 from flask import Flask, Response
 
-from tsgen.flask_integration import typed
+from tsgen.flask_integration import typed, build_ts_api
 
 test_app = Flask(__name__)
 
@@ -20,7 +22,7 @@ def client():
 
 @dataclass
 class Bar:
-    one_field: str
+    one_field: datetime.datetime
 
 
 @dataclass
@@ -32,22 +34,7 @@ class Foo:
 @test_app.route("/api/request_response_endpoint", methods=["POST"])
 @typed()
 def request_response_endpoint(the_foo: Foo) -> Bar:
-    return the_foo.sub_field
-
-
-def test_request_response(client):
-    response: test_app.response_class = client.post(
-        "/api/request_response_endpoint",
-        data=json.dumps({
-            "otherField": "hello",
-            "subField": {
-                "oneField": "world",
-            },
-        }),
-        content_type="application/json"
-    )
-    assert response.status_code == 200
-    assert {"oneField": "world"} == response.json
+    return Bar(one_field=the_foo.sub_field.one_field + datetime.timedelta(hours=12))
 
 
 @test_app.route("/api/raw_response", methods=["POST"])
@@ -58,16 +45,56 @@ def raw_response_endpoint(the_foo: Foo):
     return Response(status=201)
 
 
+@test_app.route("/api/floatify", methods=["POST"])
+@typed()
+def floatify(the_foo: str) -> float:
+    return float(the_foo.strip("#"))
+
+
+def test_non_dataclass_payloads(client):
+    response = client.post("/api/floatify", data=json.dumps("#3.5#"), content_type="application/json")
+    assert response.status_code == 200
+    assert 3.5 == response.json
+
+
+def test_request_response(client):
+    response: test_app.response_class = client.post(
+        "/api/request_response_endpoint",
+        data=json.dumps({
+            "otherField": "hello",
+            "subField": {
+                "oneField": "2020-10-02T05:04:03Z",
+            },
+        }),
+        content_type="application/json"
+    )
+    assert response.status_code == 200
+    assert {"oneField": "2020-10-02T17:04:03Z"} == response.json
+
+
 def test_raw_response(client):
+    """view that returns responses still work like normal"""
+
     response: test_app.response_class = client.post(
         "/api/raw_response",
         data=json.dumps({
             "otherField": "hello",
             "subField": {
-                "oneField": "world",
+                "oneField": "2020-10-02T05:04:03Z",
             },
         }),
         content_type="application/json"
     )
     assert response.status_code == 201
     assert response.data == b''
+
+
+def test_build_ts_api():
+    files = build_ts_api(test_app)
+    assert len(files) == 1
+    file_contents = list(files.values())[0]
+    assert "Generated source code" in file_contents
+    assert "class ApiError extends Error" in file_contents
+    assert "interface Foo {" in file_contents
+    assert "interface Bar {" in file_contents
+    assert "const requestResponseEndpoint = async (theFoo: Foo)" in file_contents

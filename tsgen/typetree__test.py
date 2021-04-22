@@ -1,8 +1,22 @@
 import datetime
 from dataclasses import dataclass
+from typing import Optional
 
-from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime
+from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode
 from tsgen.code_snippet_context import CodeSnippetContext
+
+
+class DummyTypeNode(AbstractNode):
+    """Used for generic testing"""
+
+    def ts_repr(self, ctx: CodeSnippetContext) -> str:
+        return "*dummy*"
+
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+        return f"*makeDummyDto*({ts_expression})"
+
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+        return f"*parseDto*({ts_expression})"
 
 
 def test_primitives():
@@ -12,11 +26,6 @@ def test_primitives():
     assert get_type_tree(bool) == Primitive(bool)
 
 
-def test_list():
-    assert get_type_tree(list[str]) == List(Primitive(str))
-    assert get_type_tree(list[list[bool]]) == List(List(Primitive(bool)))
-
-
 def test_datetime():
     assert get_type_tree(datetime.datetime) == DateTime()
     source = datetime.datetime(2020, 10, 1, 3, 2, 1)
@@ -24,109 +33,116 @@ def test_datetime():
     assert DateTime().parse_dto("2020-10-01T03:02:01Z") == source
 
 
-def test_object():
-    @dataclass
-    class Foo:
-        some_field: str
+class TestObject:
+    def test_object(self):
+        @dataclass
+        class Foo:
+            some_field: str
 
-    assert get_type_tree(Foo, locals()) == Object(Foo, {"some_field": Primitive(str)})
+        assert get_type_tree(Foo, locals()) == Object(Foo, {"some_field": Primitive(str)})
 
+    def test_nested(self):
+        @dataclass
+        class Bar:
+            other_field: str
 
-def test_nested():
-    @dataclass
-    class Bar:
-        other_field: str
+        @dataclass
+        class Foo:
+            some_field: Bar
+            list_field: list[Bar]
 
-    @dataclass
-    class Foo:
-        some_field: Bar
-        list_field: list[Bar]
+        expected_bar_node = Object(Bar, {"other_field": Primitive(str)})
+        assert get_type_tree(Foo, locals()) == Object(
+            Foo, {
+                "some_field": expected_bar_node,
+                "list_field": List(expected_bar_node)
+            }
+        )
 
-    expected_bar_node = Object(Bar, {"other_field": Primitive(str)})
-    assert get_type_tree(Foo, locals()) == Object(
-        Foo, {
-            "some_field": expected_bar_node,
-            "list_field": List(expected_bar_node)
-        }
-    )
+    def test_object_ts_repr(self):
+        ctx = CodeSnippetContext()
 
+        @dataclass()
+        class Foo:
+            my_field: int
+            other_field: str
 
-# interface generation tests
-
-
-def test_list_ts_repr():
-    ctx = CodeSnippetContext()
-    assert List(Primitive(int)).ts_repr(ctx) == "number[]"
-    assert List(Primitive(str)).ts_repr(ctx) == "string[]"
-    assert List(List(Primitive(str))).ts_repr(ctx) == "string[][]"
-
-
-def test_object_ts_repr():
-    ctx = CodeSnippetContext()
-
-    @dataclass()
-    class Foo:
-        my_field: int
-        other_field: str
-
-    tree = Object.match(Foo)
-    assert tree.ts_repr(ctx) == "Foo"
-    assert ctx.top_level_snippets() == {"Foo"}
-    assert ctx.get_snippet("Foo") == """
+        tree = Object.match(Foo)
+        assert tree.ts_repr(ctx) == "Foo"
+        assert ctx.top_level_snippets() == {"Foo"}
+        assert ctx.get_snippet("Foo") == """
 interface Foo {
   myField: number;
   otherField: string;
 }"""
 
 
-def test_deep_nested_tree_tsrepr():
-    @dataclass
-    class Baz:
-        nano: int
+# interface generation tests
 
-    @dataclass
-    class Bar:
-        micro: Baz
+class TestCombinations:
+    def test_list_ts_repr(self):
+        ctx = CodeSnippetContext()
+        assert List(Primitive(int)).ts_repr(ctx) == "number[]"
+        assert List(Primitive(str)).ts_repr(ctx) == "string[]"
+        assert List(List(Primitive(str))).ts_repr(ctx) == "string[][]"
 
-    @dataclass
-    class Foo:
-        my_field: Bar
+    def test_deep_nested_tree_ts_repr(self):
+        @dataclass
+        class Baz:
+            nano: int
 
-    tree = Object.match(Foo)
-    ctx = CodeSnippetContext()
-    assert tree.ts_repr(ctx) == "Foo"
+        @dataclass
+        class Bar:
+            micro: list[Baz]
 
-    assert "Foo" in ctx
-    assert ctx.get_snippet("Foo") == """
+        @dataclass
+        class Foo:
+            my_field: Bar
+
+        tree = Object.match(Foo)
+        ctx = CodeSnippetContext()
+        assert tree.ts_repr(ctx) == "Foo"
+
+        assert "Foo" in ctx
+        assert ctx.get_snippet("Foo") == """
 interface Foo {
   myField: Bar;
 }"""
-    assert "Bar" in ctx
-    assert ctx.get_snippet("Bar") == """
+        assert "Bar" in ctx
+        assert ctx.get_snippet("Bar") == """
 interface Bar {
-  micro: Baz;
+  micro: Baz[];
 }"""
 
-    assert "Baz" in ctx
-    assert ctx.get_snippet("Baz") == """
+        assert "Baz" in ctx
+        assert ctx.get_snippet("Baz") == """
 interface Baz {
   nano: number;
 }"""
 
-    assert ctx.topological_dependencies("Foo") == ["Baz", "Bar", "Foo"]
+        assert ctx.topological_dependencies("Foo") == ["Baz", "Bar", "Foo"]
 
 
-def test_list_of_dataclass_tsrepr():
-    ctx = CodeSnippetContext()
-    @dataclass
-    class Bar:
-        my_field: int
+class TestList:
+    def test_tree_parsing(self):
+        assert get_type_tree(list[str]) == List(Primitive(str))
+        assert get_type_tree(list[list[bool]]) == List(List(Primitive(bool)))
 
-    @dataclass
-    class Foo:
-        bars: list[Bar]
+    def test_list_dto(self):
+        t = List.match(list[str])
+        assert t.create_dto(["hello", "world"]) == ["hello", "world"]
 
-    tree = Object.match(Foo)
+    def test_ts_repr(self):
+        ctx = CodeSnippetContext()
+        t = List(DummyTypeNode())
+        assert t.ts_repr(ctx) == "*dummy*[]"
 
-    assert tree.ts_repr(ctx) == "Foo"
-    assert ctx.natural_order() == ["Bar", "Foo"]
+    def test_ts_create_dto(self):
+        ctx = CodeSnippetContext()
+        t = List(DummyTypeNode())
+        assert t.ts_create_dto(ctx, "listVar") == "listVar.map(item => *makeDummyDto*(item))"
+
+    def test_ts_parse_dto(self):
+        ctx = CodeSnippetContext()
+        t = List(DummyTypeNode())
+        assert t.ts_parse_dto(ctx, "dtoVar") == "dtoVar.map((item: *dummy*) => *parseDto*(item))"
