@@ -4,7 +4,7 @@ import dataclasses
 import datetime
 from dataclasses import dataclass, is_dataclass
 from types import GenericAlias
-from typing import Optional, get_type_hints
+from typing import Optional, get_type_hints, Any, Callable
 
 import jinja2
 
@@ -52,6 +52,9 @@ class AbstractNode:
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         return ts_expression
 
+    def dto_tree(self) -> AbstractNode:
+        raise NotImplementedError(repr(self))
+
 
 @dataclass()
 class List(AbstractNode):
@@ -75,12 +78,16 @@ class List(AbstractNode):
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         sub_expression = self.element_node.ts_create_dto(ctx, 'item')
-        return f"{ts_expression}.map(item => {sub_expression})"
+        return f"{ts_expression}.map(item => ({sub_expression}))"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        subtype = self.element_node.ts_repr(ctx)
+        # FIXME: subtype would be the incorrect type here if the dto is different from ts_repr!
+        element_dto_type = self.element_node.dto_tree().ts_repr(ctx)
         dto_parsing_code = self.element_node.ts_parse_dto(ctx, "item")
-        return f"{ts_expression}.map((item: {subtype}) => {dto_parsing_code})"
+        return f"{ts_expression}.map((item: {element_dto_type}) => ({dto_parsing_code}))"
+
+    def dto_tree(self) -> AbstractNode:
+        return List(self.element_node.dto_tree())
 
 
 TS_INTERFACE_TEMPLATE = """
@@ -92,9 +99,18 @@ interface {{name}} {
 """
 
 
+def get_dataclass_type_hints(dc, localns=None):
+    dc_types = get_type_hints(dc, localns=localns)
+    return {
+        field.name: dc_types[field.name]
+        for field in dataclasses.fields(dc)
+    }
+
+
 @dataclass()
 class Object(AbstractNode):
-    dataclass: type
+    name: str
+    constructor: Callable
     fields: dict[str, AbstractNode]
 
     @classmethod
@@ -105,10 +121,10 @@ class Object(AbstractNode):
                 field_name: get_type_tree(subtype, localns)
                 for field_name, subtype in field_hints.items()
             }
-            return Object(dataclass=pytype, fields=fields)
+            return Object(pytype.__name__, constructor=pytype, fields=fields)
 
     def ts_repr(self, ctx: CodeSnippetContext):
-        interface_name = to_pascal(self.dataclass.__name__)
+        interface_name = to_pascal(self.name)
         if interface_name not in ctx:
             code = self._render_ts_interface(interface_name, ctx)
             ctx.add(interface_name, code)
@@ -130,7 +146,7 @@ class Object(AbstractNode):
         )
 
     def parse_dto(self, struct):
-        return self.dataclass(**{
+        return self.constructor(**{
             name: subtype.parse_dto(struct[to_camel(name)])
             for name, subtype in self.fields.items()
         })
@@ -159,6 +175,15 @@ class Object(AbstractNode):
 
         return f"{{{', '.join(subexprs)}}}"
 
+    def dto_tree(self) -> AbstractNode:
+        # TODO: use TypedDict Node instead of named object type
+        def failing_constructor():
+            raise RuntimeError("Dto object should never be instantiated on the Python side")
+
+        return Object(self.name + "Dto", failing_constructor, {
+            name: field_tree.dto_tree() for name, field_tree in self.fields.items()
+        })
+
 
 @dataclass()
 class Primitive(AbstractNode):
@@ -177,6 +202,9 @@ class Primitive(AbstractNode):
 
     def create_dto(self, pystruct):
         return pystruct
+
+    def dto_tree(self) -> AbstractNode:
+        return self
 
 
 @dataclass()
@@ -207,13 +235,59 @@ class DateTime(AbstractNode):
             ctx.add(prep_function_name, iso_formatter_ts)
         return f"{prep_function_name}({ts_expression})"
 
+    def dto_tree(self) -> AbstractNode:
+        return Primitive(str)
 
-type_registry = [Primitive, List, Object, DateTime]
+
+@dataclass()
+class Dict(AbstractNode):
+    value_type: AbstractNode
+    MAP_OBJECT_TS_HELPER = """
+const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: string]: U } => {
+  const result: { [key: string]: U } = {};
+  Object.keys(o).forEach((key) => {
+    result[key] = f(o[key]);
+  });
+  return result;
+}
+"""
+    @classmethod
+    def match(cls, pytype: type, localns=None) -> Optional[AbstractNode]:
+        if isinstance(pytype, GenericAlias) and pytype.__origin__ == dict:
+            if pytype.__args__[0] != str:
+                raise UnsupportedTypeError(pytype.__args__[0])  # js objects only properly support string keys
+            return Dict(
+                get_type_tree(pytype.__args__[1], localns=localns)
+            )
+
+    def ts_repr(self, ctx: CodeSnippetContext) -> str:
+        subtype = self.value_type.ts_repr(ctx)
+        return f"{{ [key: string]: {subtype} }}"
+
+    def parse_dto(self, struct):
+        return {key: self.value_type.parse_dto(value) for key, value in struct.items()}
+
+    def create_dto(self, pystruct):
+        return {key: self.value_type.create_dto(value) for key, value in pystruct.items()}
+
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+        if "_mapObject" not in ctx:
+            ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
+        sub_expr = self.value_type.ts_parse_dto(ctx, "val")
+        value_dto_type = self.value_type.dto_tree().ts_repr(ctx)
+        return f"_mapObject({ts_expression}, (val: {value_dto_type}) => ({sub_expr}))"
+
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+        if "_mapObject" not in ctx:
+            ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
+        sub_expr = self.value_type.ts_create_dto(ctx, "val")
+        return f"_mapObject({ts_expression}, val => ({sub_expr}))"
+
+    def dto_tree(self) -> AbstractNode:
+        return Dict(value_type=self.value_type.dto_tree())
 
 
-def get_dataclass_type_hints(dc, localns=None):
-    dc_types = get_type_hints(dc, localns=localns)
-    return {
-        field.name: dc_types[field.name]
-        for field in dataclasses.fields(dc)
-    }
+type_registry = [Primitive, List, Object, DateTime, Dict]
+
+
+

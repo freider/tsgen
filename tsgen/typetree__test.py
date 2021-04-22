@@ -1,8 +1,11 @@
 import datetime
 from dataclasses import dataclass
+from types import GenericAlias
 from typing import Optional
 
-from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode
+import pytest
+
+from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode, UnsupportedTypeError, Dict
 from tsgen.code_snippet_context import CodeSnippetContext
 
 
@@ -11,13 +14,21 @@ class DummyTypeNode(AbstractNode):
     """Used for generic testing"""
 
     def ts_repr(self, ctx: CodeSnippetContext) -> str:
-        return "*dummy*"
+        return "*Dummy*"
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         return f"*makeDummyDto*({ts_expression})"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return f"*parseDto*({ts_expression})"
+        return f"*parseDummyDto*({ts_expression})"
+
+    def dto_tree(self) -> AbstractNode:
+        # noinspection PyAbstractClass
+        class DummyDto(AbstractNode):
+            def ts_repr(self, ctx):
+                return "*DummyDto*"
+
+        return DummyDto()
 
 
 def test_primitives():
@@ -40,7 +51,7 @@ class TestObject:
         class Foo:
             some_field: str
 
-        assert get_type_tree(Foo, locals()) == Object(Foo, {"some_field": Primitive(str)})
+        assert get_type_tree(Foo, locals()) == Object("Foo", Foo, {"some_field": Primitive(str)})
 
     def test_nested(self):
         @dataclass
@@ -52,9 +63,11 @@ class TestObject:
             some_field: Bar
             list_field: list[Bar]
 
-        expected_bar_node = Object(Bar, {"other_field": Primitive(str)})
+        expected_bar_node = Object("Bar", Bar, {"other_field": Primitive(str)})
         assert get_type_tree(Foo, locals()) == Object(
-            Foo, {
+            "Foo",
+            Foo,
+            {
                 "some_field": expected_bar_node,
                 "list_field": List(expected_bar_node)
             }
@@ -136,14 +149,35 @@ class TestList:
     def test_ts_repr(self):
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
-        assert t.ts_repr(ctx) == "*dummy*[]"
+        assert t.ts_repr(ctx) == "*Dummy*[]"
 
     def test_ts_create_dto(self):
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
-        assert t.ts_create_dto(ctx, "listVar") == "listVar.map(item => *makeDummyDto*(item))"
+        assert t.ts_create_dto(ctx, "listVar") == "listVar.map(item => (*makeDummyDto*(item)))"
 
     def test_ts_parse_dto(self):
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
-        assert t.ts_parse_dto(ctx, "dtoVar") == "dtoVar.map((item: *dummy*) => *parseDto*(item))"
+        parse_expr = t.ts_parse_dto(ctx, "*dtoVar*")
+        assert "*dtoVar*.map((item: *DummyDto*) => (*parseDummyDto*(item)))" == parse_expr
+
+
+class TestDict:
+    def test_tree_parsing(self):
+        assert get_type_tree(dict[str, int]) == Dict(Primitive(int))
+        with pytest.raises(UnsupportedTypeError):
+            get_type_tree(dict[int, str])
+
+    def test_ts_repr(self):
+        assert Dict(DummyTypeNode()).ts_repr(CodeSnippetContext()) == "{ [key: string]: *Dummy* }"
+
+    def test_ts_parse_dto(self):
+        ctx = CodeSnippetContext()
+        parse_expr = Dict(DummyTypeNode()).ts_parse_dto(ctx, "*dtoVar*")
+        assert parse_expr == "_mapObject(*dtoVar*, (val: *DummyDto*) => (*parseDummyDto*(val)))"
+
+    def test_ts_create_dto(self):
+        ctx = CodeSnippetContext()
+        parse_expr = Dict(DummyTypeNode()).ts_create_dto(ctx, "*dtoVar*")
+        assert parse_expr == "_mapObject(*dtoVar*, val => (*makeDummyDto*(val)))"

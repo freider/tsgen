@@ -61,6 +61,12 @@ def reverse(items: list[int]) -> list[int]:
     return items
 
 
+@app.route("/api/dict-transform", methods=["POST"])
+@typed()
+def dict_transform(dct: dict[str, int]) -> dict[str, Foo]:
+    return {k + "_trans": Foo(f"_form{v}") for k, v in dct.items()}
+
+
 # enable hot reloads in development mode
 dev_reload_hook(app, str(Path(__file__).parent / "frontend/generated"))
 
