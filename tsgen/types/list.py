@@ -32,7 +32,6 @@ class List(AbstractNode):
         return f"{ts_expression}.map(item => ({sub_expression}))"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        # FIXME: subtype would be the incorrect type here if the dto is different from ts_repr!
         dto_parsing_code = self.element_node.ts_parse_dto(ctx, "item")
         return f"{ts_expression}.map(item => ({dto_parsing_code}))"
 
