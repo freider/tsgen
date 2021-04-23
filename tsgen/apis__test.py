@@ -27,8 +27,8 @@ export const getFoo = async (myId: string): Promise<Foo> => {
   if (!response.ok) {
     throw new ApiError("HTTP status code: " + response.status, response);
   }
-  const dto = await response.json();
+  const dto: FooDto = await response.json();
   return {};
 }"""
     assert func_code == expected_func_code
-    assert ts_context.natural_order() == ["Foo"]
+    assert ts_context.natural_order() == ["Foo", "FooDto"]

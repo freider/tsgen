@@ -4,13 +4,12 @@ import dataclasses
 import datetime
 from dataclasses import dataclass, is_dataclass
 from types import GenericAlias
-from typing import Optional, get_type_hints, Any, Callable
+from typing import Optional, get_type_hints, Callable
 
 import jinja2
 
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.formatting import to_camel, to_pascal
-
 
 PRIMITIVE_TYPES: dict[type, str] = {
     str: "string",
@@ -82,9 +81,8 @@ class List(AbstractNode):
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         # FIXME: subtype would be the incorrect type here if the dto is different from ts_repr!
-        element_dto_type = self.element_node.dto_tree().ts_repr(ctx)
         dto_parsing_code = self.element_node.ts_parse_dto(ctx, "item")
-        return f"{ts_expression}.map((item: {element_dto_type}) => ({dto_parsing_code}))"
+        return f"{ts_expression}.map(item => ({dto_parsing_code}))"
 
     def dto_tree(self) -> AbstractNode:
         return List(self.element_node.dto_tree())
@@ -178,7 +176,7 @@ class Object(AbstractNode):
     def dto_tree(self) -> AbstractNode:
         # TODO: use TypedDict Node instead of named object type
         def failing_constructor():
-            raise RuntimeError("Dto object should never be instantiated on the Python side")
+            raise RuntimeError("Dto object type should never be instantiated on the Python side")
 
         return Object(self.name + "Dto", failing_constructor, {
             name: field_tree.dto_tree() for name, field_tree in self.fields.items()
@@ -251,6 +249,7 @@ const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: str
   return result;
 }
 """
+
     @classmethod
     def match(cls, pytype: type, localns=None) -> Optional[AbstractNode]:
         if isinstance(pytype, GenericAlias) and pytype.__origin__ == dict:
@@ -274,8 +273,7 @@ const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: str
         if "_mapObject" not in ctx:
             ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
         sub_expr = self.value_type.ts_parse_dto(ctx, "val")
-        value_dto_type = self.value_type.dto_tree().ts_repr(ctx)
-        return f"_mapObject({ts_expression}, (val: {value_dto_type}) => ({sub_expr}))"
+        return f"_mapObject({ts_expression}, val => ({sub_expr}))"
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         if "_mapObject" not in ctx:
@@ -288,6 +286,3 @@ const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: str
 
 
 type_registry = [Primitive, List, Object, DateTime, Dict]
-
-
-

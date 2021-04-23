@@ -22,7 +22,7 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
     throw new ApiError("HTTP status code: " + response.status, response);
   }
   {%- if response_type_name != "void" %}
-  const dto = await response.json();
+  const dto: {{ response_dto_type }} = await response.json();
   return {{return_expression}};
   {%- endif %}
 }
@@ -48,9 +48,11 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str]
     if info.return_type_tree is None:
         ts_return_type = "void"
         return_expression = None
+        response_dto_type = None
     else:
         ts_return_type = info.return_type_tree.ts_repr(ctx)
         return_expression = info.return_type_tree.ts_parse_dto(ctx, "dto")
+        response_dto_type = info.return_type_tree.dto_tree().ts_repr(ctx)
 
     payload_args = set(info.payloads.keys()) - set(url_args)
     assert len(payload_args) <= 1
@@ -67,6 +69,7 @@ def build_ts_func(info: TSGenFunctionInfo, url_pattern: str, url_args: list[str]
     ts_function_code = jinja2.Template(TS_FUNC_TEMPLATE).render({
         "function_name": info.ts_function_name,
         "response_type_name": ts_return_type,
+        "response_dto_type": response_dto_type,
         "payload_expression": payload_expression,
         "args": ts_args,
         "method": method,

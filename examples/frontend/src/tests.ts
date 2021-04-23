@@ -1,4 +1,4 @@
-import {createBar, failing, getFoo, nextDay, onlyInjectEndpoint, reverse} from '../generated/api';
+import {createBar, dictTransform, failing, getFoo, nextDay, onlyInjectEndpoint, reverse} from '../generated/api';
 
 const tests = [
   ['send param, receive payload', async () => {
@@ -27,7 +27,13 @@ const tests = [
   }],
   ['send and receive list', async () => {
     const ret = await reverse([37, 13]);
-    return ret.length == 2 && ret[0] == 13 && ret[1] == 37
+    return JSON.stringify(ret) == JSON.stringify([13, 37])
+  }],
+  ['send and receive homogenous dict', async () => {
+    const ret = await dictTransform({foo: 5, bar: 17});
+    const sameKeys = JSON.stringify(Object.keys(ret).sort()) == JSON.stringify(["foo_trans", "bar_trans"].sort())
+    const sameValues = ret["foo_trans"].oneField == "_form5" && ret["bar_trans"].oneField == "_form17";
+    return sameKeys && sameValues;
   }],
 ]
 
