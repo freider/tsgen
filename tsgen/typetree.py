@@ -227,7 +227,7 @@ class DateTime(AbstractNode):
         return f"new Date({ts_expression})"
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        prep_function_name = "formatISODateString"
+        prep_function_name = "_formatISODateString"
         if prep_function_name not in ctx:
             iso_formatter_ts = f"const {prep_function_name} = (d: Date): string => d.toISOString().split('.')[0] + 'Z';"
             ctx.add(prep_function_name, iso_formatter_ts)

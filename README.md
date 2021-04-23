@@ -1,16 +1,17 @@
-# tsgen 0.1.0
+# tsgen 0.2.0
 
 tsgen is a lightweight library for building typescript interfaces and client side accessor boilerplate based on Python types and (Flask) route definitions.
 
 ## Who is it for?
-Mainly for myself ;) I built it because it was fun to build from scratch and learn a bit more about python type hint introspection.
+Mainly for myself ;) I built it because it was fun to build from scratch and learn a bit more about python type hint introspection and various aspects of typing syntax in both Python and TypeScript. 
 
-It can be useful for anyone who is setting up a new web project with a typescript frontend and a Python/Flask backend and want to build/prototype something quickly without having to write client code boilerplate or set up more complicated client code generation systems.
+However - It can definitely be useful for anyone who is setting up a new web project with a typescript frontend and a Python/Flask backend and want to build/prototype something quickly without having to write client code boilerplate or set up more complicated client code generation systems.
 
 ## Installation instructions
-Due to the feature incompleteness, hacky nature of the project and lack of current commitment to updating the project, it's currently not added to pypi.
-
-You can install the package using a git reference, e.g.: `pip install git+git://github.com/freider/tsgen.git`.
+The package is currently not in pypi. You can install the package using a git reference, e.g.:
+```shell
+pip install git+git://github.com/freider/tsgen.git
+```
 
 To enable the code generation cli tool, add the `tsgen.flask.cli_blueprint` to your flask app:
 
@@ -21,12 +22,12 @@ from tsgen.flask_integration import cli_blueprint
 app = Flask(__name__)
 app.register_blueprint(cli_blueprint)
 ```
-The blueprint registers no routes, but adds the `tsgen` group of command line tools to your flask app (e.g. `flask tsgen build`)
+The blueprint registers no routes but adds the `tsgen` group of command line tools to your flask app (e.g. `flask tsgen build`)
 
 ## Features
-* Generation of typescript interfaces based on Python type annotations, including dataclasses ([PEP 557](https://www.python.org/dev/peps/pep-0557/)).
-* Generation of typescript client side accessor functions using `fetch` to get/post typed data to/from flask routes.
-* Payload data injection for flask views, to access http body payload data as typed data instead of untyped json-like structures
+* Generation of TypeScript interfaces based on Python type annotations, including dataclasses ([PEP 557](https://www.python.org/dev/peps/pep-0557/)).
+* Generation of TypeScript client side accessor functions using `fetch` to get/post typed data to/from flask routes.
+* Provides payload data injection for flask views, to access http body payload data as typed data instead of untyped json-like structures
 
 ### Example
 
@@ -115,16 +116,17 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 
 ### Currently supported type translations
 
-| Python type          | Typescript type   | Note                       |
-| -------------        | ---------------   | -----------------------    |
-| `dataclass`          | `interface`       |                            |
-| `int`                | `number`          |                            |
-| `float`              | `number`          |                            |
-| `bool`               | `boolean`         |                            |
-| `list[T]`            | `T[]`             |                            |
-| `datetime.datetime`  | `Date`            | Using ISO 8601 string DTOs |  
+| Python type          | Typescript type      | Note                        |
+| -------------        | ---------------      | -----------------------     |
+| `dataclass`          | `interface`          |                             |
+| `int`                | `number`             |                             |
+| `float`              | `number`             |                             |
+| `bool`               | `boolean`            |                             |
+| `list[T]`            | `T[]`                |                             |
+| `datetime.datetime`  | `Date`               | Using ISO 8601 string DTOs  |
+` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
 
-It should be relatively straight forward to add support for additional data types as needs arises (e.g. dicts and date/datetime objects)
+Additional/Custom types can be added by implementing a new subclass of the `tsgen.typetree.AbstractNode` and adding it to `tsgen.typetree.type_registry`.
 
 ### Name formatting
 tsgen translates python *snake_case* field names and function names into *camelCase* variables and functions in typescript to conform with standard linting rules in each context. This renaming rule is currently non-optional.

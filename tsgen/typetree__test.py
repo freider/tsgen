@@ -1,12 +1,11 @@
 import datetime
 from dataclasses import dataclass
-from types import GenericAlias
 from typing import Optional
 
 import pytest
 
-from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode, UnsupportedTypeError, Dict
 from tsgen.code_snippet_context import CodeSnippetContext
+from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode, UnsupportedTypeError, Dict
 
 
 # noinspection PyAbstractClass
@@ -160,7 +159,7 @@ class TestList:
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
         parse_expr = t.ts_parse_dto(ctx, "*dtoVar*")
-        assert "*dtoVar*.map((item: *DummyDto*) => (*parseDummyDto*(item)))" == parse_expr
+        assert "*dtoVar*.map(item => (*parseDummyDto*(item)))" == parse_expr
 
 
 class TestDict:
@@ -175,7 +174,7 @@ class TestDict:
     def test_ts_parse_dto(self):
         ctx = CodeSnippetContext()
         parse_expr = Dict(DummyTypeNode()).ts_parse_dto(ctx, "*dtoVar*")
-        assert parse_expr == "_mapObject(*dtoVar*, (val: *DummyDto*) => (*parseDummyDto*(val)))"
+        assert parse_expr == "_mapObject(*dtoVar*, val => (*parseDummyDto*(val)))"
 
     def test_ts_create_dto(self):
         ctx = CodeSnippetContext()
