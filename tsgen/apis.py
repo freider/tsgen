@@ -5,7 +5,8 @@ import jinja2
 
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.formatting import to_camel
-from tsgen.typetree import get_type_tree, AbstractNode
+from tsgen.types.typetree import get_type_tree
+from tsgen.types.base import AbstractNode
 
 TS_FUNC_TEMPLATE = """
 export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {

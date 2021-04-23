@@ -5,7 +5,12 @@ from typing import Optional
 import pytest
 
 from tsgen.code_snippet_context import CodeSnippetContext
-from tsgen.typetree import get_type_tree, Primitive, List, Object, DateTime, AbstractNode, UnsupportedTypeError, Dict
+from tsgen.types.typetree import get_type_tree
+from tsgen.types.dict import Dict
+from tsgen.types.datetime import DateTime
+from tsgen.types.object import Object
+from tsgen.types.list import List
+from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError
 
 
 # noinspection PyAbstractClass
