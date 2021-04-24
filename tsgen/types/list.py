@@ -28,12 +28,16 @@ class List(AbstractNode):
         return [self.element_node.create_dto(it) for it in pystruct]
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        sub_expression = self.element_node.ts_create_dto(ctx, 'item')
+        sub_expression = self.element_node.ts_create_dto(ctx, "item")
+        if sub_expression == "item":
+            return ts_expression
         return f"{ts_expression}.map(item => ({sub_expression}))"
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        dto_parsing_code = self.element_node.ts_parse_dto(ctx, "item")
-        return f"{ts_expression}.map(item => ({dto_parsing_code}))"
+        sub_expression = self.element_node.ts_parse_dto(ctx, "item")
+        if sub_expression == "item":
+            return ts_expression
+        return f"{ts_expression}.map(item => ({sub_expression}))"
 
     def dto_tree(self) -> AbstractNode:
         return List(self.element_node.dto_tree())

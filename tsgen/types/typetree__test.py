@@ -94,6 +94,31 @@ interface Foo {
   otherField: string;
 }"""
 
+    def test_ts_create_dto_generic(self):
+        ctx = CodeSnippetContext()
+        t = Object("GenObj", lambda: None, {
+            "d1": DummyTypeNode(),
+        })
+        parse_expr = t.ts_create_dto(ctx, "*dtoVar*")
+        assert parse_expr == "{d1: *makeDummyDto*(*dtoVar*.d1)}"
+
+    def test_ts_create_dto_json_compatible(self):
+        ctx = CodeSnippetContext()
+        t = Object("GenObj", lambda: None, {
+            "d1": Primitive(bool),
+        })
+        parse_expr = t.ts_create_dto(ctx, "*dtoVar*")
+        assert parse_expr == "*dtoVar*"
+
+    def test_ts_create_dto_partially_json_compatible(self):
+        ctx = CodeSnippetContext()
+        t = Object("GenObj", lambda: None, {
+            "d1": Primitive(bool),
+            "d2": DummyTypeNode(),
+        })
+        parse_expr = t.ts_create_dto(ctx, "*dtoVar*")
+        assert parse_expr == "{...*dtoVar*, d2: *makeDummyDto*(*dtoVar*.d2)}"
+
 
 # interface generation tests
 
@@ -158,13 +183,25 @@ class TestList:
     def test_ts_create_dto(self):
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
-        assert t.ts_create_dto(ctx, "listVar") == "listVar.map(item => (*makeDummyDto*(item)))"
+        assert t.ts_create_dto(ctx, "*listVar*") == "*listVar*.map(item => (*makeDummyDto*(item)))"
+
+    def test_ts_create_dto_with_json_compatible_element(self):
+        ctx = CodeSnippetContext()
+        t = List(Primitive(str))
+        create_expr = t.ts_create_dto(ctx, "*listVar*")
+        assert "*listVar*" == create_expr
 
     def test_ts_parse_dto(self):
         ctx = CodeSnippetContext()
         t = List(DummyTypeNode())
         parse_expr = t.ts_parse_dto(ctx, "*dtoVar*")
         assert "*dtoVar*.map(item => (*parseDummyDto*(item)))" == parse_expr
+
+    def test_ts_parse_dto_with_json_compatible_element(self):
+        ctx = CodeSnippetContext()
+        t = List(Primitive(int))
+        parse_expr = t.ts_parse_dto(ctx, "*dtoVar*")
+        assert "*dtoVar*" == parse_expr
 
 
 class TestDict:
@@ -176,12 +213,17 @@ class TestDict:
     def test_ts_repr(self):
         assert Dict(DummyTypeNode()).ts_repr(CodeSnippetContext()) == "{ [key: string]: *Dummy* }"
 
-    def test_ts_parse_dto(self):
+    def test_ts_parse_dto_generic(self):
         ctx = CodeSnippetContext()
         parse_expr = Dict(DummyTypeNode()).ts_parse_dto(ctx, "*dtoVar*")
         assert parse_expr == "_mapObject(*dtoVar*, val => (*parseDummyDto*(val)))"
 
-    def test_ts_create_dto(self):
+    def test_ts_create_dto_generic(self):
         ctx = CodeSnippetContext()
         parse_expr = Dict(DummyTypeNode()).ts_create_dto(ctx, "*dtoVar*")
         assert parse_expr == "_mapObject(*dtoVar*, val => (*makeDummyDto*(val)))"
+
+    def test_ts_create_dto_json_compatible(self):
+        ctx = CodeSnippetContext()
+        parse_expr = Dict(Primitive(str)).ts_create_dto(ctx, "*dtoVar*")
+        assert parse_expr == "*dtoVar*"

@@ -1,6 +1,4 @@
 from functools import wraps
-from functools import wraps
-from pathlib import Path
 from types import FunctionType
 
 import click
@@ -8,7 +6,7 @@ import flask
 import sys
 from flask import request, jsonify, Blueprint
 
-from tsgen.apis import TSGenFunctionInfo, prepare_function, ClientBuilder, get_prepared_info, has_prepared_info
+from tsgen.apis import prepare_function, ClientBuilder, get_prepared_info, has_prepared_info
 
 
 def typed(localns=None):

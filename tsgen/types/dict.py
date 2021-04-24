@@ -40,15 +40,17 @@ const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: str
         return {key: self.value_type.create_dto(value) for key, value in pystruct.items()}
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        if "_mapObject" not in ctx:
-            ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
+        ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
         sub_expr = self.value_type.ts_parse_dto(ctx, "val")
+        if sub_expr == "val":
+            return ts_expression
         return f"_mapObject({ts_expression}, val => ({sub_expr}))"
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        if "_mapObject" not in ctx:
-            ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
+        ctx.add("_mapObject", self.MAP_OBJECT_TS_HELPER)
         sub_expr = self.value_type.ts_create_dto(ctx, "val")
+        if sub_expr == "val":
+            return ts_expression
         return f"_mapObject({ts_expression}, val => ({sub_expr}))"
 
     def dto_tree(self) -> AbstractNode:

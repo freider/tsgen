@@ -76,23 +76,26 @@ class Object(AbstractNode):
             for name, subtype in self.fields.items()
         }
 
-    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+    def _dto_recode_helper(self, ctx: CodeSnippetContext, ts_expression: str, func_getter):
         subexprs = []
         for name, subtype in self.fields.items():
             ts_name = to_camel(name)
             field_ref = f"{ts_expression}.{ts_name}"
-            subexprs.append(f"{ts_name}: {subtype.ts_create_dto(ctx, field_ref)}")
+            sub_expr = func_getter(subtype)(ctx, field_ref)
+            if sub_expr != field_ref:
+                subexprs.append(f"{ts_name}: {sub_expr}")
 
-        return f"{{{', '.join(subexprs)}}}"
+        if not subexprs:
+            return ts_expression
+        if len(subexprs) == len(self.fields):
+            return f"{{{', '.join(subexprs)}}}"
+        return f"{{...{ts_expression}, {', '.join(subexprs)}}}"
+
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+        return self._dto_recode_helper(ctx, ts_expression, lambda t: t.ts_create_dto)
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        subexprs = []
-        for name, subtype in self.fields.items():
-            ts_name = to_camel(name)
-            field_ref = f"{ts_expression}.{ts_name}"
-            subexprs.append(f"{ts_name}: {subtype.ts_parse_dto(ctx, field_ref)}")
-
-        return f"{{{', '.join(subexprs)}}}"
+        return self._dto_recode_helper(ctx, ts_expression, lambda t: t.ts_parse_dto)
 
     def dto_tree(self) -> AbstractNode:
         # TODO: use TypedDict Node instead of named object type
