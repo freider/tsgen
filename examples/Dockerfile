@@ -14,10 +14,11 @@ CMD ["flask", "run", "--host", "0.0.0.0"]
 
 FROM node:15-slim AS frontend
 #  build/serve static html/js bundle
-COPY examples/frontend /node-root
 WORKDIR /node-root/
+COPY examples/frontend/package.json .
 RUN npm install
-COPY --from=api_server /flask-root/frontend/generated /node-root/generated
+COPY examples/frontend ./
+COPY --from=api_server /flask-root/frontend/generated ./generated
 RUN npx tsc --noEmit  #  type check
 ENV EXAMPLE_API_ENDPOINT="api:5000"
 CMD ["npx", "parcel", "src/index.html"]

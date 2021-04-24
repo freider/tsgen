@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from tsgen import apis
-from tsgen.apis import get_endpoint_info
+from tsgen.apis import build_ts_func
 from tsgen.code_snippet_context import CodeSnippetContext
+from tsgen.types.typetree import get_type_tree
 
 
 @dataclass
@@ -12,13 +13,17 @@ class Foo:
 
 
 def test_api_gen():
-    # noinspection PyUnusedLocal
-    def get_foo(my_id) -> Foo:
-        return Foo()
-
-    ts_context = CodeSnippetContext()
-    info = get_endpoint_info(get_foo)
-    func_code = apis.build_ts_func(info, "/api/foo/<my_id>", ["my_id"], "GET", ts_context)
+    foo_type_tree = get_type_tree(Foo)
+    ctx = CodeSnippetContext()
+    func_code = build_ts_func(
+        "getFoo",
+        foo_type_tree,
+        None,
+        "/api/foo/<my_id>",
+        ["my_id"],
+        "GET",
+        ctx
+    )
     expected_func_code = """
 export const getFoo = async (myId: string): Promise<Foo> => {
   const response = await fetch(`/api/foo/${myId}`, {
@@ -31,4 +36,4 @@ export const getFoo = async (myId: string): Promise<Foo> => {
   return {};
 }"""
     assert func_code == expected_func_code
-    assert ts_context.natural_order() == ["Foo", "FooDto"]
+    assert ctx.natural_order() == ["ApiError", "Foo", "FooDto"]

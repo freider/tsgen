@@ -168,11 +168,13 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 ## TODO
 ### Major
 * More generic api support for other frameworks than Flask (starlette, fastapi?)
+* Support for multiple parameters
+* Conform to official flask extension pattern recommendations
 
 ### Minor
-* Support for typed/casted url arguments in api routes
+* Support for typed/casted url arguments in api routes, and maybe query params?
 * New types
-    * Support for `dict\[T, U\]`
+    * Support for `tuple[T,...]`
     * Support for `TypedDict`
     * Support for `Optional\[T]`
     * Support for "*any*" untyped subtrees

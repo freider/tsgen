@@ -15,7 +15,7 @@ class CodeSnippetContext:
         self._dependencies: dict[str, set[str]] = defaultdict(set)  # name -> set of names
 
     def add(self, name, code):
-        assert name not in self._snippets
+        assert name not in self._snippets or self._snippets[name] == code, f"Same snippet {name} but different code"
         self._snippets[name] = code
         if self._parent_snippet:
             self._dependencies[self._parent_snippet].add(name)

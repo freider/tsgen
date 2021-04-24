@@ -90,7 +90,7 @@ def test_raw_response(client):
 
 
 def test_build_ts_api():
-    files = build_ts_api(test_app)
+    files = build_ts_api(test_app).get_files()
     assert len(files) == 1
     file_contents = list(files.values())[0]
     assert "Generated source code" in file_contents
