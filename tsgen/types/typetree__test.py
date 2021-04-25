@@ -7,7 +7,7 @@ import pytest
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.types.typetree import get_type_tree
 from tsgen.types.dict import Dict
-from tsgen.types.datetime_node import DateTime
+from tsgen.types.dates import DateTime
 from tsgen.types.object import Object
 from tsgen.types.list import List
 from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError

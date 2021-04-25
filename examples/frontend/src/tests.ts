@@ -34,6 +34,10 @@ const tests = [
     const ret = await nextDay(new Date("2020-02-01T03:02:01Z"));
     return ret.getTime() === new Date("2020-02-02T03:02:01Z").getTime();
   }],
+  ['send and receive date', async () => {
+    const ret = await nextDay(new Date("2020-02-01Z"));
+    return ret.getTime() === new Date("2020-02-02Z").getTime();
+  }],
   ['send and receive list', async () => {
     const ret = await reverse([37, 13]);
     return JSON.stringify(ret) == JSON.stringify([13, 37])

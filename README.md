@@ -1,4 +1,4 @@
-# tsgen 0.2.0
+# tsgen 0.2.1
 
 tsgen is a lightweight library for building typescript interfaces and client side accessor boilerplate based on Python types and (Flask) route definitions.
 
@@ -124,6 +124,8 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 | `bool`               | `boolean`            |                             |
 | `list[T]`            | `T[]`                |                             |
 | `datetime.datetime`  | `Date`               | Using ISO 8601 string DTOs  |
+| `datetime.date`      | `Date`               | same without time part    |
+| `tuple[T...]`        | `[T...]`             |                             |
 ` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
 
 Additional/Custom types can be added by implementing a new subclass of the `tsgen.typetree.AbstractNode` and adding it to `tsgen.typetree.type_registry`.
@@ -151,7 +153,7 @@ Together with HMR support on the bundler side (using parcel or webpack or simila
 ## Dev/Testing instructions
 The examples dir serves as a simple development environment for the library, as well as a "manual" integration test. To build and run it using docker-compose, run the following command:
 ```shell
-docker-compose -f docker-compose.dev.yml up --build
+docker-compose up --build
 ```
 You can then inspect the test results by navigating to http://localhost:1234
 
@@ -174,6 +176,5 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 ### Minor
 * Support for typed/casted url arguments in api routes, and maybe query params?
 * New types
-    * Support for `tuple[T,...]`
     * Support for `Optional\[T]`
     * Support for "*any*" untyped subtrees

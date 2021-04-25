@@ -73,6 +73,12 @@ def get_max_tuple(data: list[tuple[datetime.datetime, int]]) -> tuple[datetime.d
     return max(data, key=lambda x: x[1])
 
 
+@app.route("/api/next-day-date", methods=["POST"])
+@typed()
+def next_day_date(date: datetime.date) -> datetime.date:
+    return date + datetime.timedelta(1)
+
+
 # enable hot reloads in development mode
 # Todo: would be nice to find a better way to specify the path of output
 # that would be consistent between local dev and the docker file system
