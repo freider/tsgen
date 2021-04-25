@@ -1,4 +1,13 @@
-import {createBar, dictTransform, failing, getFoo, nextDay, onlyInjectEndpoint, reverse} from '../generated/api';
+import {
+  createBar,
+  dictTransform,
+  failing,
+  getFoo,
+  getMaxTuple,
+  nextDay,
+  onlyInjectEndpoint,
+  reverse
+} from '../generated/api';
 
 const tests = [
   ['send param, receive payload', async () => {
@@ -35,6 +44,14 @@ const tests = [
     const sameValues = ret["foo_trans"].oneField == "_form5" && ret["bar_trans"].oneField == "_form17";
     return sameKeys && sameValues;
   }],
+  ['send and receive tuples', async () => {
+    const ret = await getMaxTuple([
+      [new Date(2021, 4, 24), 10],
+      [new Date(2021, 4, 25), 12],
+      [new Date(2021, 4, 26), 11],
+    ])
+    return ret[0].getDate() == 25 && ret[1] == 12;
+  }]
 ]
 
 export default tests;

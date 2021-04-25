@@ -8,8 +8,8 @@ import jinja2
 
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.formatting import to_camel
-from tsgen.types.typetree import get_type_tree
-from tsgen.types.base import AbstractNode
+from tsgen.types import get_type_tree, AbstractNode
+
 
 TS_FILE_PATTERN = """// Generated source code - do not modify this file
 {%- for entity in entities %}
@@ -18,7 +18,7 @@ TS_FILE_PATTERN = """// Generated source code - do not modify this file
 """
 
 TS_API_ERROR = """
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(public message: string, public response: Response) {
     super(message);
     // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-doesnt-extending-built-ins-like-error-array-and-map-work

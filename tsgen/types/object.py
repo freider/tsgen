@@ -10,7 +10,7 @@ from tsgen.types.base import AbstractNode
 from tsgen.types.typetree import get_type_tree
 
 TS_INTERFACE_TEMPLATE = """
-interface {{name}} {
+{%- if name %}{{ prefix }}interface {{name}} {% endif %}{
 {%- for field_name, type in fields %}
   {{field_name}}: {{type}};
 {%- endfor %}
@@ -28,9 +28,13 @@ def get_dataclass_type_hints(dc, localns=None):
 
 @dataclass()
 class Object(AbstractNode):
-    name: str
-    constructor: Callable
+    name: Optional[str]   # when name is none the type will be inlined instead of declared
+    constructor: Callable  # python constuctor for the object, taking keyword arguments for each field
     fields: dict[str, AbstractNode]
+
+    # configurable options for specific use cases
+    public: bool = True
+    translate_name: bool = True
 
     @classmethod
     def match(cls, pytype: type, localns=None):
@@ -43,25 +47,29 @@ class Object(AbstractNode):
             return Object(pytype.__name__, constructor=pytype, fields=fields)
 
     def ts_repr(self, ctx: CodeSnippetContext):
-        interface_name = to_pascal(self.name)
-        if interface_name not in ctx:
-            code = self._render_ts_interface(interface_name, ctx)
-            ctx.add(interface_name, code)
+        if self.name:
+            interface_name = to_pascal(self.name) if self.translate_name else self.name
+            if interface_name not in ctx:
+                subctx = ctx.subcontext(interface_name)
+                code = self._render_ts_interface(interface_name, subctx)
+                ctx.add(interface_name, code)
+            return interface_name
+        else:
+            return self._render_ts_interface(None, ctx)
 
-        return interface_name
-
-    def _render_ts_interface(self, interface_name: str, ctx: CodeSnippetContext):
+    def _render_ts_interface(self, interface_name: Optional[str], ctx: CodeSnippetContext):
         ts_fields = []
-        subctx = ctx.subcontext(interface_name)
+
         for field_name, sub_node in self.fields.items():
-            field_ts_type = sub_node.ts_repr(subctx)
+            field_ts_type = sub_node.ts_repr(ctx)
             field_ts_name = to_camel(field_name)
             ts_fields.append((field_ts_name, field_ts_type))
 
         declaration_template = jinja2.Template(TS_INTERFACE_TEMPLATE)
         return declaration_template.render(
             name=interface_name,
-            fields=ts_fields
+            fields=ts_fields,
+            prefix="export " if self.public else ""
         )
 
     def parse_dto(self, struct):
@@ -91,17 +99,22 @@ class Object(AbstractNode):
             return f"{{{', '.join(subexprs)}}}"
         return f"{{...{ts_expression}, {', '.join(subexprs)}}}"
 
-    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
         return self._dto_recode_helper(ctx, ts_expression, lambda t: t.ts_create_dto)
 
-    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
         return self._dto_recode_helper(ctx, ts_expression, lambda t: t.ts_parse_dto)
 
     def dto_tree(self) -> AbstractNode:
-        # TODO: use TypedDict Node instead of named object type
         def failing_constructor():
             raise RuntimeError("Dto object type should never be instantiated on the Python side")
 
-        return Object(self.name + "Dto", failing_constructor, {
-            name: field_tree.dto_tree() for name, field_tree in self.fields.items()
-        })
+        return Object(
+            name=f"_{self.name}Dto",
+            constructor=failing_constructor,
+            fields={
+                name: field_tree.dto_tree() for name, field_tree in self.fields.items()
+            },
+            public=False,
+            translate_name=False,
+        )

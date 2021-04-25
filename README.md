@@ -175,6 +175,5 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 * Support for typed/casted url arguments in api routes, and maybe query params?
 * New types
     * Support for `tuple[T,...]`
-    * Support for `TypedDict`
     * Support for `Optional\[T]`
     * Support for "*any*" untyped subtrees

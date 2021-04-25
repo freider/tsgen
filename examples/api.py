@@ -67,6 +67,12 @@ def dict_transform(dct: dict[str, int]) -> dict[str, Foo]:
     return {k + "_trans": Foo(f"_form{v}") for k, v in dct.items()}
 
 
+@app.route("/api/get-max-tuple", methods=["POST"])
+@typed()
+def get_max_tuple(data: list[tuple[datetime.datetime, int]]) -> tuple[datetime.datetime, int]:
+    return max(data, key=lambda x: x[1])
+
+
 # enable hot reloads in development mode
 # Todo: would be nice to find a better way to specify the path of output
 # that would be consistent between local dev and the docker file system

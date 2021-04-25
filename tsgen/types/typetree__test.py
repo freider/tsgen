@@ -7,7 +7,7 @@ import pytest
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.types.typetree import get_type_tree
 from tsgen.types.dict import Dict
-from tsgen.types.datetime import DateTime
+from tsgen.types.datetime_node import DateTime
 from tsgen.types.object import Object
 from tsgen.types.list import List
 from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError
@@ -88,8 +88,7 @@ class TestObject:
         tree = Object.match(Foo)
         assert tree.ts_repr(ctx) == "Foo"
         assert ctx.top_level_snippets() == {"Foo"}
-        assert ctx.get_snippet("Foo") == """
-interface Foo {
+        assert ctx.get_snippet("Foo") == """export interface Foo {
   myField: number;
   otherField: string;
 }"""
@@ -147,19 +146,16 @@ class TestCombinations:
         assert tree.ts_repr(ctx) == "Foo"
 
         assert "Foo" in ctx
-        assert ctx.get_snippet("Foo") == """
-interface Foo {
+        assert ctx.get_snippet("Foo") == """export interface Foo {
   myField: Bar;
 }"""
         assert "Bar" in ctx
-        assert ctx.get_snippet("Bar") == """
-interface Bar {
+        assert ctx.get_snippet("Bar") == """export interface Bar {
   micro: Baz[];
 }"""
 
         assert "Baz" in ctx
-        assert ctx.get_snippet("Baz") == """
-interface Baz {
+        assert ctx.get_snippet("Baz") == """export interface Baz {
   nano: number;
 }"""
 

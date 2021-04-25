@@ -19,11 +19,11 @@ class AbstractNode:
     def create_dto(self, pystruct):
         raise NotImplementedError(repr(self))
 
-    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return ts_expression
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        raise NotImplementedError(repr(self))
 
-    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return ts_expression
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        raise NotImplementedError(repr(self))
 
     def dto_tree(self) -> AbstractNode:
         raise NotImplementedError(repr(self))
@@ -58,6 +58,12 @@ class Primitive(AbstractNode):
 
     def dto_tree(self) -> AbstractNode:
         return self
+
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        return ts_expression
+
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        return ts_expression
 
 
 class UnsupportedTypeError(Exception):

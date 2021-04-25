@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from types import GenericAlias
-from typing import Optional
 
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.types.base import AbstractNode
@@ -27,13 +26,13 @@ class List(AbstractNode):
     def create_dto(self, pystruct):
         return [self.element_node.create_dto(it) for it in pystruct]
 
-    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
         sub_expression = self.element_node.ts_create_dto(ctx, "item")
         if sub_expression == "item":
             return ts_expression
         return f"{ts_expression}.map(item => ({sub_expression}))"
 
-    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
         sub_expression = self.element_node.ts_parse_dto(ctx, "item")
         if sub_expression == "item":
             return ts_expression
