@@ -1,4 +1,4 @@
-# tsgen 0.2.1
+# tsgen 0.2.2
 
 tsgen is a lightweight library for building typescript interfaces and client side accessor boilerplate based on Python types and (Flask) route definitions.
 

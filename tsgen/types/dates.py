@@ -53,16 +53,16 @@ class Date(AbstractNode):
         return datetime.datetime.strptime(struct, "%Y-%m-%d").date()
 
     def create_dto(self, pystruct):
-        assert isinstance(pystruct, datetime.datetime)
+        assert isinstance(pystruct, datetime.date)
         return pystruct.strftime("%Y-%m-%d")
 
     def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
-        return f"new Date({ts_expression})"
+        return f"new Date({ts_expression} + 'Z')"
 
     def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> Optional[str]:
         prep_function_name = "_formatISODateString"
         if prep_function_name not in ctx:
-            iso_formatter_ts = f"const {prep_function_name} = (d: Date): string => d.toISOString().split('T')[0] + 'Z';"
+            iso_formatter_ts = f"const {prep_function_name} = (d: Date): string => d.toISOString().split('T')[0];"
             ctx.add(prep_function_name, iso_formatter_ts)
         return f"{prep_function_name}({ts_expression})"
 

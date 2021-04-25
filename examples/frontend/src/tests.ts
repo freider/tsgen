@@ -4,7 +4,7 @@ import {
   failing,
   getFoo,
   getMaxTuple,
-  nextDay,
+  nextDay, nextDayDate,
   onlyInjectEndpoint,
   reverse
 } from '../generated/api';
@@ -35,7 +35,7 @@ const tests = [
     return ret.getTime() === new Date("2020-02-02T03:02:01Z").getTime();
   }],
   ['send and receive date', async () => {
-    const ret = await nextDay(new Date("2020-02-01Z"));
+    const ret = await nextDayDate(new Date("2020-02-01Z"));
     return ret.getTime() === new Date("2020-02-02Z").getTime();
   }],
   ['send and receive list', async () => {
