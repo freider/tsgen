@@ -3,3 +3,5 @@
 .venv
 poetry.lock
 __pycache__
+examples/instance
+out

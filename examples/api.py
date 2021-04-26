@@ -80,10 +80,7 @@ def next_day_date(date: datetime.date) -> datetime.date:
 
 
 # enable hot reloads in development mode
-# Todo: would be nice to find a better way to specify the path of output
-# that would be consistent between local dev and the docker file system
-# Currently its using a relative path within the frontend dir to allow
-dev_reload_hook(app, str(Path(__file__).parent / "frontend/generated"))
+dev_reload_hook(app)
 
 
 if __name__ == '__main__':

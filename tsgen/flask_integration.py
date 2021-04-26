@@ -1,4 +1,6 @@
+import os
 from functools import wraps
+from pathlib import Path
 from types import FunctionType
 
 import click
@@ -66,7 +68,12 @@ def build_ts_api(app: flask.Flask) -> ClientBuilder:
     return client_builder
 
 
-def build_and_save_api(app: flask.Flask, root_dir: str):
+def build_and_save_api(app: flask.Flask, root_dir: str = None):
+    if root_dir is None:
+        root_dir = os.environ.get("TSGEN_OUTPUT_DIR")
+    if not root_dir:
+        root_dir = (Path(app.instance_path) / "tsgen_output").as_posix()
+
     app.logger.info(f"Writing client code to {root_dir}")
     client_builder = build_ts_api(app)
     client_builder.save_to_disk(root_dir)
@@ -75,21 +82,25 @@ def build_and_save_api(app: flask.Flask, root_dir: str):
 cli_blueprint = Blueprint("tsgen", __name__)
 
 
-def dev_reload_hook(app: flask.Flask, root_dir: str):
+def dev_reload_hook(app: flask.Flask, root_dir: str = None):
     """Rebuild typescript every time the flask app is (re)started
 
     Call this at module scope in your flask app main file.
     Only triggers in development mode.
     """
-    if app.config["ENV"] != "development":
-        return
-    if sys.argv[-2:] == ["tsgen", "build"]:
-        return  # when running the explicit generation command
+    # noinspection PyBroadException
+    try:
+        if app.config["ENV"] != "development":
+            return
+        if "tsgen build" in " ".join(sys.argv):
+            return  # when running the explicit generation command
 
-    build_and_save_api(app, root_dir)
+        build_and_save_api(app, root_dir)
+    except Exception:
+        app.logger.exception("An error occurred during tsgen reload hook")
 
 
 @cli_blueprint.cli.command("build")
-@click.argument('root_dir', nargs=1)
-def build(root_dir):
-    build_and_save_api(flask.current_app, root_dir)
+@click.option('--output-dir', default=None)
+def build(output_dir):
+    build_and_save_api(flask.current_app, output_dir)

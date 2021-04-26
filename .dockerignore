@@ -1,7 +1,6 @@
-.venv
-.pytest_cache
 examples/frontend/node_modules
 examples/frontend/.parcel-cache
 examples/frontend/dist
 examples/frontend/api.ts
 examples/frontend/package-lock.json
+examples/instance

@@ -9,7 +9,7 @@ services:
     # where changes are immediately reflected in the containers
     volumes:
     - "./examples/api.py:/flask-root/api.py:ro"
-    - "generated:/flask-root/frontend/generated"
+    - "generated:/tsgen-output"
     - "./tsgen:/usr/local/lib/python3.9/site-packages/tsgen/"
 
   frontend:

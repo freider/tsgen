@@ -60,7 +60,7 @@ __IMPORTANT__: The `typed` decorator must currently be applied before to the fla
 To generate the typescript source files, run the following command in the context of your flask app:
 
 ```shell
-flask tsgen build /some/output/dir
+flask tsgen build --output-dir /some/output/dir
 ```
 
 Using the above route example, the following typescript interface and function is generated:
@@ -126,7 +126,7 @@ export const createBar = async (bar: Bar): Promise<Foo> => {
 | `datetime.datetime`  | `Date`               | Using ISO 8601 string DTOs  |
 | `datetime.date`      | `Date`               | same without time part    |
 | `tuple[T...]`        | `[T...]`             |                             |
-` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
+|` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
 
 Additional/Custom types can be added by implementing a new subclass of the `tsgen.typetree.AbstractNode` and adding it to `tsgen.typetree.type_registry`.
 
@@ -142,8 +142,9 @@ from tsgen.flask_integration import dev_reload_hook
 
 app = Flask(__name__)
 
-# ... add routes
-dev_reload_hook(app, "/your/output/path")
+# ...
+# After route definitions:
+dev_reload_hook(app)
 ```
 
 Together with HMR support on the bundler side (using parcel or webpack or similar) this can be extremely powerful as you can basically change stuff in your backend api and have the changes reflect in your browser without a hard page refresh.
