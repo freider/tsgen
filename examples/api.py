@@ -73,7 +73,7 @@ def get_max_tuple(data: list[tuple[datetime.datetime, int]]) -> tuple[datetime.d
     return max(data, key=lambda x: x[1])
 
 
-@app.route("/api/next-day-date", methods=["POST"])
+@app.route("/api/next-day-date", methods=["PUT"])
 @typed()
 def next_day_date(date: datetime.date) -> datetime.date:
     return date + datetime.timedelta(1)
