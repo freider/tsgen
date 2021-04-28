@@ -1,4 +1,4 @@
-# tsgen 0.3.1
+# tsgen 0.3.2
 
 tsgen is a lightweight library for building typescript interfaces and client side api accessor boilerplate based on Python types and (Flask) route definitions.
 
@@ -10,7 +10,7 @@ However - It can definitely be useful for anyone who is setting up a new web pro
 ## Installation instructions
 The package is currently not in pypi. You can install the package using a git reference, e.g.:
 ```shell
-pip install git+git://github.com/freider/tsgen.git@v0.3.1
+pip install git+git://github.com/freider/tsgen.git@v0.3.2
 ```
 
 To enable the code generation cli tool, call `init_tsgen(app)`on your flask app:
