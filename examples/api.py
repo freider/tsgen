@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
+from typing import Optional
 
 from flask import Flask, Response, request
 
-from tsgen.flask_integration import typed, dev_reload_hook, init_tsgen
+from tsgen.flask_integration import typed, dev_reload_hook, init_tsgen, build_ts_api
 
 app = Flask(__name__)
 init_tsgen(app)
@@ -78,9 +79,21 @@ def next_day_date(date: datetime.date) -> datetime.date:
     return date + datetime.timedelta(1)
 
 
+@app.route("/api/nullable", methods=["POST"])
+@typed()
+def nullable(s: Optional[str]) -> Optional[list[int]]:
+    if s is None:
+        return None
+    elif s.isdigit():
+        return [int(s)]
+    return []
+
+
 # enable hot reloads in development mode
 dev_reload_hook(app)
 
 
 if __name__ == '__main__':
-    app.run()
+    for v in build_ts_api(app).get_files().values():
+        print(v)
+    #app.run()

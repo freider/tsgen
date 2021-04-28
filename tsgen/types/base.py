@@ -69,3 +69,26 @@ class Primitive(AbstractNode):
 class UnsupportedTypeError(Exception):
     def __init__(self, pytype):
         super(UnsupportedTypeError, self).__init__(f"Unsupported python type {pytype}")
+
+
+@dataclass()
+class UnsupportedTypeNode(AbstractNode):
+    pytype: type
+
+    def ts_repr(self, ctx: CodeSnippetContext) -> str:
+        raise UnsupportedTypeError(self.pytype)
+
+    def parse_dto(self, struct):
+        raise UnsupportedTypeError(self.pytype)
+
+    def create_dto(self, pystruct):
+        raise UnsupportedTypeError(self.pytype)
+
+    def ts_create_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        raise UnsupportedTypeError(self.pytype)
+
+    def ts_parse_dto(self, ctx: CodeSnippetContext, ts_expression: str) -> str:
+        raise UnsupportedTypeError(self.pytype)
+
+    def dto_tree(self) -> AbstractNode:
+        raise UnsupportedTypeError(self.pytype)

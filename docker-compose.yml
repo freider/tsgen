@@ -9,8 +9,8 @@ services:
     # where changes are immediately reflected in the containers
     volumes:
     - "./examples/api.py:/flask-root/api.py:ro"
-    - "generated:/tsgen-output"
-    - "./tsgen:/usr/local/lib/python3.9/site-packages/tsgen/"
+    - "./examples/frontend/generated:/tsgen-output"
+    - "./tsgen:/src/tsgen"
 
   frontend:
     image: freider/tsgen:frontend
@@ -25,8 +25,5 @@ services:
     # the volumes are not required, but enable a smooth development environment
     # where changes are immediately reflected in the containers
     volumes:
-    - "generated:/node-root/generated:ro"
+    - "./examples/frontend/generated:/node-root/generated:ro"
     - "./examples/frontend/src:/node-root/src/:ro"
-
-volumes:
-  generated:

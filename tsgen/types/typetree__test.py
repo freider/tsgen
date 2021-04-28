@@ -246,4 +246,3 @@ class TestDict:
         ctx = CodeSnippetContext()
         parse_expr = Dict(Primitive(str)).ts_create_dto(ctx, "*dtoVar*")
         assert parse_expr == "*dtoVar*"
-

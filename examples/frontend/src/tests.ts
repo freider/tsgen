@@ -4,7 +4,7 @@ import {
   failing,
   getFoo,
   getMaxTuple,
-  nextDay, nextDayDate,
+  nextDay, nextDayDate, nullable,
   onlyInjectEndpoint,
   reverse
 } from '../generated/api';
@@ -55,7 +55,14 @@ const tests = [
       [new Date(2021, 4, 26), 11],
     ])
     return ret[0].getDate() == 25 && ret[1] == 12;
-  }]
+  }],
+  ['nullable', async () => {
+    return (
+      await nullable(null) === null
+      && (await nullable("123"))?.map(i => i * 2)[0] == 246
+      && (await nullable("foo")) instanceof Array
+    );
+  }],
 ]
 
 export default tests;

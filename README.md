@@ -167,6 +167,7 @@ export const someDates = async (): Promise<Date[]> => {
 |` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
 | `datetime.datetime`  | `Date`               | Using ISO 8601 string DTOs  |
 | `datetime.date`      | `Date`               | same without time part    |
+| `typing.Optional[T]` | `T \ null`           | (<-- pipe character) |
 
 
 Additional types can be added by implementing a new subclass of the `tsgen.typetree.AbstractNode` and adding it to `tsgen.typetree.type_registry`.
@@ -218,5 +219,5 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 * Improved error messages when data doesn't conform to type declarations
 * Support for typed/casted url arguments in api routes, and maybe query params?
 * New types
-    * Support for `Optional\[T]`
-    * Support for "*any*" untyped subtrees ?
+  * Union types
+  * Support for "*any*" untyped subtrees ?
