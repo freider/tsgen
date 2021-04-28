@@ -166,8 +166,8 @@ export const someDates = async (): Promise<Date[]> => {
 | `tuple[T...]`        | `[T...]`             |                             |
 |` dict[str, T]`        | `{ [key: string]: T}`| Only `str` keys due to js constraints |
 | `datetime.datetime`  | `Date`               | Using ISO 8601 string DTOs  |
-| `datetime.date`      | `Date`               | same without time part    |
-| `typing.Optional[T]` | `T \ null`           | (<-- pipe character) |
+| `datetime.date`      | `Date`               | same without time part      |
+| `typing.Optional[T]` | `T \| null`          |                             |
 
 
 Additional types can be added by implementing a new subclass of the `tsgen.typetree.AbstractNode` and adding it to `tsgen.typetree.type_registry`.
