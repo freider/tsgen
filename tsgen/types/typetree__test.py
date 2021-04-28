@@ -14,6 +14,12 @@ from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError
 
 
 # noinspection PyAbstractClass
+@dataclass()
+class DummyDtoTypeNode(AbstractNode):
+    def ts_repr(self, ctx):
+        return "*DummyDto*"
+
+# noinspection PyAbstractClass
 class DummyTypeNode(AbstractNode):
     """Used for generic testing"""
 
@@ -27,12 +33,7 @@ class DummyTypeNode(AbstractNode):
         return f"*parseDummyDto*({ts_expression})"
 
     def dto_tree(self) -> AbstractNode:
-        # noinspection PyAbstractClass
-        class DummyDto(AbstractNode):
-            def ts_repr(self, ctx):
-                return "*DummyDto*"
-
-        return DummyDto()
+        return DummyDtoTypeNode()
 
 
 def test_primitives():
@@ -57,7 +58,7 @@ def test_date():
 
 
 class TestObject:
-    def test_object(self):
+    def test_simple(self):
         @dataclass
         class Foo:
             some_field: str
@@ -99,6 +100,20 @@ class TestObject:
   myField: number;
   otherField: string;
 }"""
+
+    def test_simple_dto_is_self(self):
+        tree = Object("Simple", lambda: None, fields={"foo": Primitive(int), "bar": Primitive(str)})
+        assert tree.dto_tree() == tree
+
+    def test_non_simple_dto_is_not_self(self):
+        tree = Object("Simple", lambda: None, fields={"foo": DummyTypeNode()})
+        dto_tree = tree.dto_tree()
+        assert isinstance(tree, Object)
+        assert dto_tree != tree
+        assert dto_tree.name == "_SimpleDto"
+        assert dto_tree.fields == {
+            "foo": DummyDtoTypeNode(),
+        }
 
     def test_ts_create_dto_generic(self):
         ctx = CodeSnippetContext()
@@ -169,6 +184,7 @@ class TestCombinations:
         assert ctx.topological_dependencies("Foo") == ["Baz", "Bar", "Foo"]
 
 
+
 class TestList:
     def test_tree_parsing(self):
         assert get_type_tree(list[str]) == List(Primitive(str))
@@ -230,3 +246,4 @@ class TestDict:
         ctx = CodeSnippetContext()
         parse_expr = Dict(Primitive(str)).ts_create_dto(ctx, "*dtoVar*")
         assert parse_expr == "*dtoVar*"
+

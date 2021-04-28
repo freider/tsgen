@@ -43,8 +43,12 @@ export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_na
     throw new ApiError("HTTP status code: " + response.status, response);
   }
   {%- if response_type_name != "void" %}
+  {%- if return_expression == "dto" %}
+  return await response.json();
+  {%- else %}   
   const dto: {{ response_dto_type }} = await response.json();
   return {{return_expression}};
+  {%- endif %}
   {%- endif %}
 }
 """

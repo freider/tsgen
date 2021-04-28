@@ -103,4 +103,10 @@ def dev_reload_hook(app: flask.Flask, root_dir: str = None):
 @cli_blueprint.cli.command("build")
 @click.option('--output-dir', default=None)
 def build(output_dir):
-    build_and_save_api(flask.current_app, output_dir)
+    if output_dir == '-':
+        client_builder = build_ts_api(flask.current_app)
+        for modulepath, content in client_builder.get_files().items():
+            print(f">>> {modulepath}")
+            print(content)
+    else:
+        build_and_save_api(flask.current_app, output_dir)

@@ -106,15 +106,20 @@ class Object(AbstractNode):
         return self._dto_recode_helper(ctx, ts_expression, lambda t: t.ts_parse_dto)
 
     def dto_tree(self) -> AbstractNode:
+        sub_trees = {
+            name: field_tree.dto_tree()
+            for name, field_tree in self.fields.items()
+        }
+        if sub_trees == self.fields:
+            return self  # this prevents creation of unnecessary dto types, for cleaner ts output :)
+
         def failing_constructor():
             raise RuntimeError("Dto object type should never be instantiated on the Python side")
 
         return Object(
             name=f"_{self.name}Dto",
             constructor=failing_constructor,
-            fields={
-                name: field_tree.dto_tree() for name, field_tree in self.fields.items()
-            },
+            fields=sub_trees,
             public=False,
             translate_name=False,
         )
