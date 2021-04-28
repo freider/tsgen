@@ -73,6 +73,11 @@ class UnsupportedTypeError(Exception):
 
 @dataclass()
 class UnsupportedTypeNode(AbstractNode):
+    """Returned instead of raising exceptions at the point of type matching
+
+    This is to enable catching of supported types at the code generation stage
+    instead (and get the fasl dev_reload_hook to catch and print any such errors)
+    """
     pytype: type
 
     def ts_repr(self, ctx: CodeSnippetContext) -> str:

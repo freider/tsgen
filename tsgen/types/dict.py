@@ -3,7 +3,7 @@ from types import GenericAlias
 from typing import Optional
 
 from tsgen.code_snippet_context import CodeSnippetContext
-from tsgen.types.base import AbstractNode, UnsupportedTypeError
+from tsgen.types.base import AbstractNode, UnsupportedTypeError, UnsupportedTypeNode
 from tsgen.types.typetree import get_type_tree
 
 
@@ -24,7 +24,8 @@ const _mapObject = <T, U>(o: { [key: string]: T }, f: (t: T) => U) : { [key: str
     def match(cls, pytype: type, localns=None) -> Optional[AbstractNode]:
         if isinstance(pytype, GenericAlias) and pytype.__origin__ == dict:
             if pytype.__args__[0] != str:
-                raise UnsupportedTypeError(pytype.__args__[0])  # js objects only properly support string keys
+                # js "objects" only properly support string keys
+                return UnsupportedTypeNode(pytype)
             return Dict(
                 get_type_tree(pytype.__args__[1], localns=localns)
             )

@@ -10,7 +10,7 @@ from tsgen.types.dict import Dict
 from tsgen.types.dates import DateTime, Date
 from tsgen.types.object import Object
 from tsgen.types.list import List
-from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError
+from tsgen.types.base import AbstractNode, Primitive, UnsupportedTypeError, UnsupportedTypeNode
 
 
 # noinspection PyAbstractClass
@@ -226,8 +226,10 @@ class TestList:
 class TestDict:
     def test_tree_parsing(self):
         assert get_type_tree(dict[str, int]) == Dict(Primitive(int))
+        t = get_type_tree(dict[int, str])
+        assert t == UnsupportedTypeNode(dict[int, str])
         with pytest.raises(UnsupportedTypeError):
-            get_type_tree(dict[int, str])
+            t.ts_repr(CodeSnippetContext())
 
     def test_ts_repr(self):
         assert Dict(DummyTypeNode()).ts_repr(CodeSnippetContext()) == "{ [key: string]: *Dummy* }"
