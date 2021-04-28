@@ -1,4 +1,4 @@
-# tsgen 0.3.0
+# tsgen 0.3.1
 
 tsgen is a lightweight library for building typescript interfaces and client side api accessor boilerplate based on Python types and (Flask) route definitions.
 
@@ -10,19 +10,19 @@ However - It can definitely be useful for anyone who is setting up a new web pro
 ## Installation instructions
 The package is currently not in pypi. You can install the package using a git reference, e.g.:
 ```shell
-pip install git+git://github.com/freider/tsgen.git@v0.3.0
+pip install git+git://github.com/freider/tsgen.git@v0.3.1
 ```
 
-To enable the code generation cli tool, add the `tsgen.flask.cli_blueprint` to your flask app:
+To enable the code generation cli tool, call `init_tsgen(app)`on your flask app:
 
 ```python
 from flask import Flask
-from tsgen.flask_integration import cli_blueprint
+from tsgen.flask_integration import init_tsgen
 
 app = Flask(__name__)
-app.register_blueprint(cli_blueprint)
+init_tsgen(app)
 ```
-The blueprint registers no routes but adds the `tsgen` group of command line tools to your flask app (e.g. `flask tsgen build`)
+The extension doesn't add or modify any routes but adds the `tsgen` group of command line tools to your flask app (e.g. `flask tsgen build`)
 
 ## Features
 * Generation of TypeScript interfaces based on Python type annotations, including dataclasses ([PEP 557](https://www.python.org/dev/peps/pep-0557/)).
@@ -33,32 +33,34 @@ The blueprint registers no routes but adds the `tsgen` group of command line too
 
 The flask integration relies on typing hints in the flask view definitions.
 
-To prepare an endpoint for source generation, make sure it has a python return type annotation and decorate your flask route with the `@tsgen.flask.typed` decorator:
+To prepare a flask view function for source generation, make sure it has a python return type annotation and decorate your flask route with the `@tsgen.flask.typed` decorator:
 
 ```python
 from dataclasses import dataclass
-
 from flask import Flask
-from tsgen import typed
-from tsgen.flask_integration import cli_blueprint
+from tsgen.flask_integration import init_tsgen, typed
 
 app = Flask(__name__)
-app.register_blueprint(cli_blueprint)
+init_tsgen(app)
 
 
 @dataclass
 class Foo:
-    one_field: str
+  one_field: str
 
 
 @app.route("/foo/<foo_id>")
 @typed()
 def get_foo(foo_id) -> Foo:
-    return Foo(one_field=f"hello {foo_id}")
+  return Foo(one_field=f"hello {foo_id}")
 ```
-__IMPORTANT__: The `typed` decorator must currently be applied before to the flask endpoint registration. This means it must be written after the `route` decorator in source code order.
+__IMPORTANT__: The `typed` decorator must be applied before to the flask route decorator. This means it must be written *after* the `route` decorator in source code order:
+```python
+@app.route("/foo/<foo_id>")
+@typed()
+```
 
-To generate the typescript source files, run the following command in the context of your flask app:
+To generate typescript source files, run the following command in the context of your flask app:
 
 ```shell
 flask tsgen build
@@ -86,9 +88,6 @@ export const getFoo = async (fooId: string): Promise<Foo> => {
 The `typed()` decorator described above also adds typed *data injection* to your flask view functions on the python side. Add a type annotated argument to your flask view function and it will be automatically populated with data from the request payload (the contents of `flask.request.json`)
 
 ```python
-from dataclasses import dataclass
-from tsgen import typed
-
 @dataclass()
 class Bar:
     something: str
@@ -131,11 +130,6 @@ For datatypes that are not directly supported by the json standard, like dates a
 
 ```python
 import datetime
-from flask import Flask
-from tsgen import typed
-
-app = Flask(__name__)
-
 
 @app.route("/some-dates/")
 @typed()
@@ -181,7 +175,7 @@ Additional types can be added by implementing a new subclass of the `tsgen.typet
 tsgen translates python *snake_case* field names and function names into *camelCase* variables and functions in typescript to conform with standard linting rules in each context. This renaming rule is currently non-optional.
 
 ### "Hot reloading"
-Add a `dev_reload_hook` call at the bottom of your flask app file to have the client code be automatically generated whenever you change your code in flask `development` mode (i.e. every time that flask reloads the app)
+Add a `dev_reload_hook` call at the bottom of your flask app file (at module level) to have the client code be automatically generated whenever you change your code in flask `development` mode.
 
 ```python
 from flask import Flask
@@ -218,12 +212,11 @@ With the possible introduction of [PEP 563](https://www.python.org/dev/peps/pep-
 ## TODO
 ### Major
 * More generic api support for other frameworks than Flask (starlette, fastapi?)
-* Support for multiple parameters
-* Conform to official flask extension pattern recommendations
+* Support for multiple input parameters (?)
 
 ### Minor
 * Improved error messages when data doesn't conform to type declarations
 * Support for typed/casted url arguments in api routes, and maybe query params?
 * New types
     * Support for `Optional\[T]`
-    * Support for "*any*" untyped subtrees
+    * Support for "*any*" untyped subtrees ?

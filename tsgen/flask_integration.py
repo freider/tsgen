@@ -6,7 +6,7 @@ from types import FunctionType
 import click
 import flask
 import sys
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, Flask
 
 from tsgen.apis import prepare_function, ClientBuilder, get_prepared_info, has_prepared_info
 
@@ -15,8 +15,9 @@ def typed(localns=None):
     """Decorator to mark flask view function for typescript client support
 
     * Mark a view for typescript client code generation
-    * Inject any dataclass argument by parsing the request payload
-    * Allow the endpoint to return a dataclass as the top level return value
+    * Inject an attached json body as a typed argument
+    * Allow for custom data <-> json conversions in injected and returned data
+    * Always return json for return-value-annotated views
     """
     def generator(func: FunctionType):
         prepare_function(func, localns=localns)
@@ -33,7 +34,6 @@ def typed(localns=None):
                 new_kwargs[payload_name] = payload_tree.parse_dto(request.json)
 
             response = func(**new_kwargs)
-            # always jsonify, so that endpoint can return a single dataclass
             if info.return_type_tree is None:
                 return response  # unannotated return value returns raw response
             return jsonify(info.return_type_tree.create_dto(response))
@@ -79,9 +79,6 @@ def build_and_save_api(app: flask.Flask, root_dir: str = None):
     client_builder.save_to_disk(root_dir)
 
 
-cli_blueprint = Blueprint("tsgen", __name__)
-
-
 def dev_reload_hook(app: flask.Flask, root_dir: str = None):
     """Rebuild typescript every time the flask app is (re)started
 
@@ -100,13 +97,14 @@ def dev_reload_hook(app: flask.Flask, root_dir: str = None):
         app.logger.exception("An error occurred during tsgen reload hook")
 
 
+cli_blueprint = Blueprint("tsgen", __name__)
+
+
 @cli_blueprint.cli.command("build")
 @click.option('--output-dir', default=None)
 def build(output_dir):
-    if output_dir == '-':
-        client_builder = build_ts_api(flask.current_app)
-        for modulepath, content in client_builder.get_files().items():
-            print(f">>> {modulepath}")
-            print(content)
-    else:
-        build_and_save_api(flask.current_app, output_dir)
+    build_and_save_api(flask.current_app, output_dir)
+
+
+def init_tsgen(app: Flask):
+    app.register_blueprint(cli_blueprint)

@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
-from pathlib import Path
 
 from flask import Flask, Response, request
 
-from tsgen.flask_integration import typed, cli_blueprint, dev_reload_hook
+from tsgen.flask_integration import typed, dev_reload_hook, init_tsgen
 
 app = Flask(__name__)
-app.register_blueprint(cli_blueprint)
+init_tsgen(app)
 
 
 @dataclass
