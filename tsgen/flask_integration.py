@@ -89,8 +89,8 @@ def dev_reload_hook(app: flask.Flask, root_dir: str = None):
     try:
         if app.config["ENV"] != "development":
             return
-        if "tsgen build" in " ".join(sys.argv):
-            return  # when running the explicit generation command
+        if "run" not in " ".join(sys.argv):
+            return  # when not running the flask dev server
 
         build_and_save_api(app, root_dir)
     except Exception:
