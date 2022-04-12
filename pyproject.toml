@@ -7,13 +7,19 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-Jinja2 = "^2.11.3"
-Flask = "^1.1.2"
+Jinja2 = "^3.1.1"
+Flask = {version = "^2.1.1", optional = true, extras = ["flask"]}
+sanic = {version = "^22.3.0", optional = true, extras = ["sanic"]}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
 python-dotenv = "^0.17.0"
 
+[tool.poetry.extras]
+flask = ["flask"]
+sanic = ["sanic"]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+

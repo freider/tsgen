@@ -3,7 +3,7 @@ import datetime
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.types import typetree, Primitive, DateTime
 from tsgen.types.tuple import Tuple
-from tsgen.types.typetree__test import DummyTypeNode
+from .typetree_test import DummyTypeNode
 
 
 def test_match_tuple():
