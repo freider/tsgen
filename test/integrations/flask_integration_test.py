@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pytest
 from flask import Flask, Response
 
-from tsgen.flask_integration import typed, build_ts_api
+from tsgen.integrations.flask_integration import typed, build_ts_api
 
 test_app = Flask(__name__)
 

@@ -14,6 +14,8 @@ sanic = {version = "^22.3.0", optional = true, extras = ["sanic"]}
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
 python-dotenv = "^0.17.0"
+sanic-testing = "^22.3.0"
+pytest-asyncio = "^0.18.3"
 
 [tool.poetry.extras]
 flask = ["flask"]
