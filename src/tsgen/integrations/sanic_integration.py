@@ -43,7 +43,7 @@ def typed(localns=None):
     return generator
 
 
-def build_ts_api(app: sanic.Sanic) -> ClientBuilder:
+def collect_endpoints(app: sanic.Sanic) -> ClientBuilder:
     """Generate typescript clients and types for a sanic app
 
     :param app: Sanic app with @typed()-decorated api routes
@@ -74,7 +74,7 @@ def build_ts_api(app: sanic.Sanic) -> ClientBuilder:
 
 def build_and_save_api(app: sanic.Sanic, root_dir: str):
     logger.info(f"Writing client code to {root_dir}")
-    client_builder = build_ts_api(app)
+    client_builder = collect_endpoints(app)
     client_builder.save_to_disk(root_dir)
 
 

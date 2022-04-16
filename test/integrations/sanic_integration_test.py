@@ -5,7 +5,7 @@ import pytest
 import sanic
 from sanic_testing.testing import SanicASGITestClient
 
-from tsgen.integrations.sanic_integration import typed
+from tsgen.integrations.sanic_integration import typed, collect_endpoints
 
 app = sanic.Sanic("testapp")
 
@@ -46,3 +46,7 @@ async def test_simple(client: SanicASGITestClient):
     _, res = await client.get("/baz/9b29e304-7d96-498c-9e7f-ac43cab82d53")
     assert res.json == "9b29e304-7d96-498c-9e7f-ac43cab82d53"
 
+
+def test_collect_endpoints():
+    api_builder = collect_endpoints(app)
+    assert len(api_builder.file_snippets) == 1

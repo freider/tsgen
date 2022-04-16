@@ -42,7 +42,7 @@ def typed(localns=None):
     return generator
 
 
-def build_ts_api(app: flask.Flask) -> ClientBuilder:
+def collect_endpoints(app: flask.Flask) -> ClientBuilder:
     """Generate typescript clients and types for a flask app
 
     :param app: Flask app with @typed()-decorated api routes
@@ -73,7 +73,7 @@ def build_and_save_api(app: flask.Flask, root_dir: str = None):
         root_dir = (Path(app.instance_path) / "tsgen_output").as_posix()
 
     app.logger.info(f"Writing client code to {root_dir}")
-    client_builder = build_ts_api(app)
+    client_builder = collect_endpoints(app)
     client_builder.save_to_disk(root_dir)
 
 

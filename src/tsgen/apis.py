@@ -2,56 +2,19 @@ import dataclasses
 import inspect
 from collections import defaultdict
 from pathlib import Path
-from types import FunctionType
 from typing import Optional, get_type_hints, Collection, Callable, Protocol, Union
 
 import jinja2
 
 from tsgen.code_snippet_context import CodeSnippetContext
 from tsgen.formatting import to_camel
+from tsgen.output_templates import fetch
 from tsgen.types import get_type_tree, AbstractNode
-
 
 TS_FILE_PATTERN = """// Generated source code - do not modify this file
 {%- for entity in entities %}
 {{entity}}
 {% endfor %}
-"""
-
-TS_API_ERROR = """
-export class ApiError extends Error {
-  constructor(public message: string, public response: Response) {
-    super(message);
-    // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-doesnt-extending-built-ins-like-error-array-and-map-work
-    Object.setPrototypeOf(this, ApiError.prototype);
-  }
-}
-"""
-
-
-TS_FUNC_TEMPLATE = """
-export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
-  const response = await fetch(`{{url_pattern}}`, {
-    method: '{{method}}'
-    {%- if payload_expression != None %},
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({{payload_expression}}),
-    {%- endif %}
-  });
-  if (!response.ok) {
-    throw new ApiError("HTTP status code: " + response.status, response);
-  }
-  {%- if response_type_name != "void" %}
-  {%- if return_expression == "dto" %}
-  return await response.json();
-  {%- else %}   
-  const dto: {{ response_dto_type }} = await response.json();
-  return {{return_expression}};
-  {%- endif %}
-  {%- endif %}
-}
 """
 
 
@@ -104,14 +67,14 @@ def has_prepared_info(func: PreparedCallableType) -> bool:
 
 
 def build_ts_func(
-        name: str,
-        return_type_tree: Optional[AbstractNode],
-        payload: Optional[tuple[str, AbstractNode]],
-        url_pattern: str,
-        url_args: list[str],
-        method: str,
-        ctx: CodeSnippetContext
-    ):
+    name: str,
+    return_type_tree: Optional[AbstractNode],
+    payload: Optional[tuple[str, AbstractNode]],
+    url_pattern: str,
+    url_args: list[str],
+    method: str,
+    ctx: CodeSnippetContext
+):
     ts_args = []
     for arg in url_args:
         ts_arg_name = to_camel(arg)
@@ -136,27 +99,28 @@ def build_ts_func(
     else:
         payload_expression = None
 
-    ctx.add("ApiError", TS_API_ERROR)
-    ts_function_code = jinja2.Template(TS_FUNC_TEMPLATE).render({
-        "function_name": name,
-        "response_type_name": ts_return_type,
-        "response_dto_type": response_dto_type,
-        "payload_expression": payload_expression,
-        "args": ts_args,
-        "method": method,
-        "url_pattern": url_pattern,
-        "return_expression": return_expression,
-    })
-    return ts_function_code
+    return fetch.render_ts_accessor(
+        ctx,
+        name=name,
+        ts_return_type=ts_return_type,
+        response_dto_type=response_dto_type,
+        payload_expression=payload_expression,
+        ts_args=ts_args,
+        method=method,
+        url_pattern=url_pattern,
+        return_expression=return_expression,
+    )
 
 
-@dataclasses.dataclass()
 class ClientBuilder:
-    file_snippets: dict[str, CodeSnippetContext] = dataclasses.field(default_factory=lambda: defaultdict(CodeSnippetContext))
+    file_snippets: defaultdict[str, CodeSnippetContext]  # source module -> CodeSnippetContext
+
+    def __init__(self):
+        self.file_snippets = defaultdict(CodeSnippetContext)
 
     def add_endpoint(self, func: PreparedCallableType, url_pattern: str, url_args: list[str], method: str):
-        import_name=func.__module__
-        function_name=func.__name__
+        import_name = func.__module__
+        function_name = func.__name__
         info = get_prepared_info(func)
         ts_context = self.file_snippets[import_name]
         ts_function_name = to_camel(function_name)
@@ -199,5 +163,4 @@ class ClientBuilder:
             ts_filename = dotpath.replace(".", "/") + ".ts"
             file_path = root_path / ts_filename
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            with file_path.open("w", encoding="utf8") as fp:
-                fp.write(content)
+            file_path.write_text(content, "utf-8")
