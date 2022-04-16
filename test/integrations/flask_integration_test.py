@@ -9,14 +9,14 @@ from flask import Flask, Response
 
 from tsgen.integrations.flask_integration import typed, build_ts_api
 
-test_app = Flask(__name__)
+app = Flask(__name__)
 
 
 @pytest.fixture
 def client():
-    test_app.config['TESTING'] = True
+    app.config['TESTING'] = True
 
-    with test_app.test_client() as client:
+    with app.test_client() as client:
         yield client
 
 
@@ -31,13 +31,13 @@ class Foo:
     sub_field: Bar
 
 
-@test_app.route("/api/request_response_endpoint", methods=["POST"])
+@app.route("/api/request_response_endpoint", methods=["POST"])
 @typed()
 def request_response_endpoint(the_foo: Foo) -> Bar:
     return Bar(one_field=the_foo.sub_field.one_field + datetime.timedelta(hours=12))
 
 
-@test_app.route("/api/raw_response", methods=["POST"])
+@app.route("/api/raw_response", methods=["POST"])
 @typed()
 def raw_response_endpoint(the_foo: Foo):
     if the_foo.other_field != "hello":
@@ -45,7 +45,7 @@ def raw_response_endpoint(the_foo: Foo):
     return Response(status=201)
 
 
-@test_app.route("/api/floatify", methods=["POST"])
+@app.route("/api/floatify", methods=["POST"])
 @typed()
 def floatify(the_foo: str) -> float:
     return float(the_foo.strip("#"))
@@ -58,7 +58,7 @@ def test_non_dataclass_payloads(client):
 
 
 def test_request_response(client):
-    response: test_app.response_class = client.post(
+    response: app.response_class = client.post(
         "/api/request_response_endpoint",
         data=json.dumps({
             "otherField": "hello",
@@ -75,7 +75,7 @@ def test_request_response(client):
 def test_raw_response(client):
     """view that returns responses still work like normal"""
 
-    response: test_app.response_class = client.post(
+    response: app.response_class = client.post(
         "/api/raw_response",
         data=json.dumps({
             "otherField": "hello",
@@ -90,7 +90,7 @@ def test_raw_response(client):
 
 
 def test_build_ts_api():
-    files = build_ts_api(test_app).get_files()
+    files = build_ts_api(app).get_files()
     assert len(files) == 1
     file_contents = list(files.values())[0]
     assert "Generated source code" in file_contents

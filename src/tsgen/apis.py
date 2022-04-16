@@ -1,8 +1,9 @@
 import dataclasses
+import inspect
 from collections import defaultdict
 from pathlib import Path
 from types import FunctionType
-from typing import Optional, get_type_hints
+from typing import Optional, get_type_hints, Collection, Callable, Protocol, Union
 
 import jinja2
 
@@ -66,14 +67,24 @@ class TSGenFunctionInfo:
     arg_type_trees: dict[str, AbstractNode]
 
 
-def prepare_function(func, localns=None) -> TSGenFunctionInfo:
+class _PreparedObject(Protocol):
+    tsgen_info: TSGenFunctionInfo
+
+
+PreparedCallableType = Union[Callable, _PreparedObject]
+
+
+def prepare_function(func, localns=None, ignore_args: int = 0, ignore_kwargs: Collection[str] = ()) -> PreparedCallableType:
     annotations = get_type_hints(func)
     return_value_py_type = annotations.pop("return", None)
     return_type_tree = None
     if return_value_py_type is not None:
         return_type_tree = get_type_tree(return_value_py_type, localns=localns)
 
-    arg_type_trees = {n: get_type_tree(t, localns=localns) for n, t in annotations.items()}
+    ignore = set(list(inspect.signature(func).parameters.keys())[:ignore_args])
+    ignore |= set(ignore_kwargs)
+
+    arg_type_trees = {n: get_type_tree(t, localns=localns) for n, t in annotations.items() if n not in ignore}
 
     info = TSGenFunctionInfo(
         return_type_tree=return_type_tree,
@@ -83,12 +94,12 @@ def prepare_function(func, localns=None) -> TSGenFunctionInfo:
     return func
 
 
-def get_prepared_info(func: FunctionType) -> TSGenFunctionInfo:
+def get_prepared_info(func: PreparedCallableType) -> TSGenFunctionInfo:
     # noinspection PyUnresolvedReferences
     return func.tsgen_info
 
 
-def has_prepared_info(func: FunctionType) -> bool:
+def has_prepared_info(func: PreparedCallableType) -> bool:
     return hasattr(func, "tsgen_info")
 
 
@@ -143,7 +154,7 @@ def build_ts_func(
 class ClientBuilder:
     file_snippets: dict[str, CodeSnippetContext] = dataclasses.field(default_factory=lambda: defaultdict(CodeSnippetContext))
 
-    def add_endpoint(self, func: FunctionType, url_pattern: str, url_args: list[str], method: str):
+    def add_endpoint(self, func: PreparedCallableType, url_pattern: str, url_args: list[str], method: str):
         import_name=func.__module__
         function_name=func.__name__
         info = get_prepared_info(func)

@@ -1,10 +1,15 @@
-import functools
+import argparse
+import logging
+import os
 import typing
 from functools import wraps
 
 import sanic
 
-from tsgen.apis import prepare_function, get_prepared_info
+from tsgen.apis import prepare_function, get_prepared_info, ClientBuilder, has_prepared_info, PreparedCallableType
+
+
+logger = logging.getLogger(__name__)
 
 
 def typed(localns=None):
@@ -16,12 +21,11 @@ def typed(localns=None):
     * Always return json for return-value-annotated views
     """
     def generator(func: typing.Callable):
-        prepare_function(func, localns=localns)
+        prepare_function(func, localns=localns, ignore_args=1)  # skip the request argument even if it's type annotated
         info = get_prepared_info(func)
 
         @wraps(func)
         async def new_f(request: sanic.Request, **kwargs):
-            # if dataclass arg has been specified, build one and add it as an arg
             new_kwargs = kwargs.copy()
             payload_args = set(info.arg_type_trees.keys()) - set(kwargs.keys())
             if payload_args:
@@ -37,3 +41,47 @@ def typed(localns=None):
         return new_f
 
     return generator
+
+
+def build_ts_api(app: sanic.Sanic) -> ClientBuilder:
+    """Generate typescript clients and types for a sanic app
+
+    :param app: Sanic app with @typed()-decorated api routes
+    """
+    client_builder = ClientBuilder()
+
+    router = app.router
+    if not router.finalized:
+        router.finalize()
+
+    for path, route in router.routes_all.items():
+        func: PreparedCallableType = route.handler
+
+        if has_prepared_info(func):
+            method = "GET"
+            if "POST" in route.methods:
+                method = "POST"
+            elif "PUT" in route.methods:
+                method = "PUT"
+            url_pattern = '/'.join(path)
+
+            # TODO/MAYBE: use param.label to also inject types for url params on the client side
+            url_args = [param.name for param in route.params.values()]
+            client_builder.add_endpoint(func, url_pattern, url_args, method)
+
+    return client_builder
+
+
+def build_and_save_api(app: sanic.Sanic, root_dir: str):
+    logger.info(f"Writing client code to {root_dir}")
+    client_builder = build_ts_api(app)
+    client_builder.save_to_disk(root_dir)
+
+
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser()
+#
+#     parser.add_argument("module")
+#
+#     if root_dir is None:
+#         root_dir = os.environ.get("TSGEN_OUTPUT_DIR")

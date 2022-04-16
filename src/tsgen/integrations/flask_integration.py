@@ -25,7 +25,6 @@ def typed(localns=None):
 
         @wraps(func)
         def new_f(**kwargs):
-            # if dataclass arg has been specified, build one and add it as an arg
             new_kwargs = kwargs.copy()
             payload_args = set(info.arg_type_trees.keys()) - set(kwargs.keys())
             if payload_args:
@@ -47,7 +46,6 @@ def build_ts_api(app: flask.Flask) -> ClientBuilder:
     """Generate typescript clients and types for a flask app
 
     :param app: Flask app with @typed()-decorated api routes
-    :return: dictionary {filename: typescript_source_code}
     """
     client_builder = ClientBuilder()
 
