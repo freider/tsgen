@@ -2,8 +2,8 @@ from collections import defaultdict
 
 
 class CircularDependency(Exception):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, nodes):
+        self.nodes = nodes
 
 
 class CodeSnippetContext:
@@ -45,38 +45,46 @@ class CodeSnippetContext:
                     ret.append(d)
         return ret
 
-    def topological_dependencies(self, name: str) -> list[str]:
+    def topological_dependencies(self, root_snippet: str) -> list[str]:
         """
-        Get all snippet dependency types in topological order
+        Get all snippet dependencies in topological order, leaf(s) -> root
+
+        * Ties are sorted alphabetically by snippet name
+        * Includes the root snippet (always the last one).
 
         :param name: The name of the snippet
         :return: List of names, in leaf -> root order
         :raises: CircularDependency if a snippet directly or indirectly depends on itself (currently not supported)
-
         """
-        used = set()
-        result: list[str] = []
 
-        def rec(t, ancestors):
-            if t in ancestors:
-                raise CircularDependency(t)
-            if t in used:
+        remaining_nodes = self._snippets.keys()
+        topological_snippets = []
+        result_set = set()
+
+        while remaining_nodes:
+            leafs = []
+            for n in sorted(remaining_nodes):
+                remaining_deps = self._dependencies[n] - result_set
+                if not remaining_deps:
+                    leafs.append(n)
+            if not leafs:
+                raise CircularDependency(remaining_nodes)
+            topological_snippets += leafs
+            result_set |= set(leafs)
+            remaining_nodes -= set(leafs)
+
+        # extract nodes in subtree under root_snippet
+        subtree = set()
+
+        def rec(n):
+            if n in subtree:
                 return
-            unused = self._dependencies[t] - used
-            if not unused:  # no unused dependency, this is a leaf!
-                result.append(t)
-                used.add(t)
-                return
+            subtree.add(n)
+            for d in self._dependencies[n]:
+                rec(d)
+        rec(root_snippet)
 
-            for dep in unused:
-                rec(dep, ancestors | {t})
-
-        while True:
-            rec(name, set())
-            if result[-1] == name:  # toplevel dependency resolved
-                break
-
-        return result
+        return [n for n in topological_snippets if n in subtree]
 
     def subcontext(self, parent_snippet):
         """Get a shallow copy of the context with a parent snippet set

@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import logging
 import os
 import typing
@@ -7,7 +8,6 @@ from functools import wraps
 import sanic
 
 from tsgen.apis import prepare_function, get_prepared_info, ClientBuilder, has_prepared_info, PreparedCallableType
-
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def collect_endpoints(app: sanic.Sanic) -> ClientBuilder:
     if not router.finalized:
         router.finalize()
 
-    for path, route in router.routes_all.items():
+    for route in router.routes:
         func: PreparedCallableType = route.handler
 
         if has_prepared_info(func):
@@ -63,7 +63,7 @@ def collect_endpoints(app: sanic.Sanic) -> ClientBuilder:
                 method = "POST"
             elif "PUT" in route.methods:
                 method = "PUT"
-            url_pattern = '/'.join(path)
+            url_pattern = route.raw_path
 
             # TODO/MAYBE: use param.label to also inject types for url params on the client side
             url_args = [param.name for param in route.params.values()]
@@ -73,15 +73,41 @@ def collect_endpoints(app: sanic.Sanic) -> ClientBuilder:
 
 
 def build_and_save_api(app: sanic.Sanic, root_dir: str):
-    logger.info(f"Writing client code to {root_dir}")
+    logger.info(f"Writing client code to {root_dir!r}")
     client_builder = collect_endpoints(app)
     client_builder.save_to_disk(root_dir)
 
 
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser()
-#
-#     parser.add_argument("module")
-#
-#     if root_dir is None:
-#         root_dir = os.environ.get("TSGEN_OUTPUT_DIR")
+def import_module_object(module_object_path: str):
+    module_path, object_name = module_object_path.rsplit(".", 1)
+    mod = importlib.import_module(module_path)
+    return getattr(mod, object_name)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("app")
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument(
+        "--factory",
+        action="store_true",
+        default=False,
+        help="Specifies if object is app factory function"
+    )
+
+    args = parser.parse_args()
+
+    if (output_dir := args.output_dir) is None:
+        output_dir = os.environ.get("TSGEN_OUTPUT_DIR", None)
+    if not output_dir:
+        output_dir = "tsgen-build"
+
+    module_object = import_module_object(args.app)
+
+    if args.factory:
+        app = module_object()
+    else:
+        app = module_object
+
+    build_and_save_api(app, output_dir)

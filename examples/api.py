@@ -6,7 +6,7 @@ from typing import Optional
 
 from flask import Flask, Response, request
 
-from tsgen.flask_integration import typed, dev_reload_hook, init_tsgen, build_ts_api
+from tsgen.integrations.flask_integration import typed, dev_reload_hook, init_tsgen, collect_endpoints
 
 app = Flask(__name__)
 init_tsgen(app)
@@ -94,6 +94,6 @@ dev_reload_hook(app)
 
 
 if __name__ == '__main__':
-    for v in build_ts_api(app).get_files().values():
+    for v in collect_endpoints(app).get_files().values():
         print(v)
     #app.run()

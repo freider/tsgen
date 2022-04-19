@@ -13,12 +13,12 @@ export class ApiError extends Error {
 """
 
 TS_FUNC_TEMPLATE = """
-export const {{function_name}} = async ({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> => {
+export async function {{function_name}}({% for arg_name, type in args %}{{arg_name}}: {{type}}{{ ", " if not loop.last else "" }}{% endfor %}): Promise<{{response_type_name}}> {
   const response = await fetch(`{{url_pattern}}`, {
-    method: '{{method}}'
+    method: "{{method}}"
     {%- if payload_expression != None %},
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({{payload_expression}}),
     {%- endif %}
@@ -50,7 +50,9 @@ def render_ts_accessor(
     url_pattern: str,  # flask style url pattern e.g., "/foo/<arg>"
     return_expression: str,
 ):
-    ctx.add("ApiError", TS_API_ERROR)
+    dependencies_ctx = ctx.subcontext(name)
+    dependencies_ctx.add("ApiError", TS_API_ERROR)
+
     ts_function_code = jinja2.Template(TS_FUNC_TEMPLATE).render({
         "function_name": name,
         "response_type_name": ts_return_type,

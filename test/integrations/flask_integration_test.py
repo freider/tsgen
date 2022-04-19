@@ -97,4 +97,4 @@ def test_build_ts_api():
     assert "class ApiError extends Error" in file_contents
     assert "interface Foo {" in file_contents
     assert "interface Bar {" in file_contents
-    assert "const requestResponseEndpoint = async (theFoo: Foo)" in file_contents
+    assert "async function requestResponseEndpoint(theFoo: Foo)" in file_contents
